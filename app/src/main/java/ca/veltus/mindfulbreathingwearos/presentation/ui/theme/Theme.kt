@@ -1,4 +1,4 @@
-package ca.veltus.mindfulbreathingwearos.presentation.theme
+package ca.veltus.mindfulbreathingwearos.presentation.ui.theme
 
 import androidx.compose.runtime.Composable
 import androidx.wear.compose.material.MaterialTheme

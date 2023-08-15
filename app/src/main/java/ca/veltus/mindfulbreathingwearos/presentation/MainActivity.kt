@@ -23,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import ca.veltus.mindfulbreathingwearos.R
-import ca.veltus.mindfulbreathingwearos.presentation.theme.MindfulBreathingWearOSTheme
+import ca.veltus.mindfulbreathingwearos.presentation.ui.theme.MindfulBreathingWearOSTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
