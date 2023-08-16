@@ -67,6 +67,7 @@ fun SessionScreen(
             Text("Start Session")
         }
     }
+    AnimatedRingTimer(isAnimating = true)
 }
 
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)

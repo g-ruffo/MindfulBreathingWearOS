@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlin.math.PI
@@ -75,7 +76,7 @@ fun AnimatedRingTimer(isAnimating: Boolean) {
 }
 
 @Composable
-@Preview(showBackground = true)
+@Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 fun AnimatedRingPreview() {
     AnimatedRingTimer(isAnimating = true)
 }
