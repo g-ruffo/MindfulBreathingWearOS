@@ -10,32 +10,46 @@ import ca.veltus.mindfulbreathingwearos.presentation.Screen
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import androidx.wear.compose.material.Button
+import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
-import ca.veltus.mindfulbreathingwearos.presentation.Navigation
 
 @Composable
-fun HomeScreen(navController: NavController) {
-    var text by remember {
-        mutableStateOf("Home Screen")
-    }
-    Column(
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 50.dp)
+fun HomeScreen(
+    navController: NavController,
+    viewModel: HomeViewModel = hiltViewModel()
+) {
+    val heartRate = viewModel.heartRate.value
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        Text(
+            text = "Current Heart Rate",
+            style = MaterialTheme.typography.title3,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Text(
+            text = "$heartRate bpm",
+            style = MaterialTheme.typography.title3,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
         Button(
-            onClick = {
-                navController.navigate(Screen.SessionScreen.withArgs(text))
-            },
             modifier = Modifier
-                .align(Alignment.End)
-                .fillMaxWidth()
-        ) {
-            Text(text = "To Detail Screen")
+                .fillMaxWidth(),
+            onClick = {
+            navController.navigate(Screen.SessionScreen.route)
+
+        }) {
+            Text("Start Breathing Session")
         }
     }
 }
@@ -43,6 +57,6 @@ fun HomeScreen(navController: NavController) {
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen(navController = rememberNavController())
+    HomeScreen(navController = rememberNavController(), viewModel = hiltViewModel())
 }
 

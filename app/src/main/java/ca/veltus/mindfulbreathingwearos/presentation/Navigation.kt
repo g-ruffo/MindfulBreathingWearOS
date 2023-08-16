@@ -16,17 +16,9 @@ fun Navigation() {
         composable(route = Screen.HomeScreen.route) {
             HomeScreen(navController = navController)
         }
-        composable(
-            route = Screen.SessionScreen.route + "/{name}",
-            arguments = listOf(
-                navArgument("name") {
-                    type = NavType.StringType
-                    defaultValue = "Grayson"
-                    nullable = true
-                }
-            )
-        ) { entry ->
-            SessionScreen(name = entry.arguments?.getString("name"))
+        composable(route = Screen.SessionScreen.route) {
+
+            SessionScreen()
         }
     }
 }
