@@ -1,6 +1,8 @@
 package ca.veltus.mindfulbreathingwearos.di
 
 import android.content.Context
+import androidx.health.services.client.HealthServices
+import androidx.health.services.client.HealthServicesClient
 import ca.veltus.mindfulbreathingwearos.data.repository.BreathingRepositoryImpl
 import ca.veltus.mindfulbreathingwearos.domain.repository.BreathingRepository
 import dagger.Module
@@ -16,7 +18,14 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideBreathingRepository(@ApplicationContext context: Context): BreathingRepository {
-        return BreathingRepositoryImpl(context)
+    fun provideHealthServicesClient(@ApplicationContext context: Context): HealthServicesClient {
+      return HealthServices.getClient(context)
+    }
+
+
+    @Provides
+    @Singleton
+    fun provideBreathingRepository(@ApplicationContext context: Context, healthServicesClient: HealthServicesClient): BreathingRepository {
+        return BreathingRepositoryImpl(context, healthServicesClient)
     }
 }

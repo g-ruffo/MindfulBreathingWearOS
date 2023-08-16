@@ -22,10 +22,9 @@ import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class BreathingRepositoryImpl @Inject constructor(
-    @ApplicationContext context: Context
+    @ApplicationContext context: Context,
+    private val healthServicesClient: HealthServicesClient
 ): BreathingRepository {
-    //health service instance
-    private val healthServicesClient = HealthServices.getClient(context)
     //measureClient instance.
     private val measureClient = healthServicesClient.measureClient
 
