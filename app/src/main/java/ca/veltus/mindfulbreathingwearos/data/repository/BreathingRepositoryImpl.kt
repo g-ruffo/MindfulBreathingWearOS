@@ -28,9 +28,14 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import java.lang.Exception
 import javax.inject.Inject
 
 class BreathingRepositoryImpl @Inject constructor(
@@ -42,6 +47,8 @@ class BreathingRepositoryImpl @Inject constructor(
 
     // In-Memory accumulation
     private val accumulatedData = mutableListOf<HeartRateDTO>()
+
+    private val isDatabaseConnected = MutableStateFlow(true)  // default is true
 
     private val job = SupervisorJob()
     private val repositoryScope = CoroutineScope(Dispatchers.IO + job)
@@ -56,7 +63,7 @@ class BreathingRepositoryImpl @Inject constructor(
         var counter = 0
         var dataToCache: List<HeartRateDTO> = emptyList()
 
-        while (isActive) {
+        while (repositoryScope.isActive) {
             delay(3000) // Wait for 3 seconds
             counter += 3
 
@@ -66,22 +73,39 @@ class BreathingRepositoryImpl @Inject constructor(
                 accumulatedData.clear()
             }
 
-            heartRateDAO.insertAllHeartRateCache(dataToCache.map { it.toHeartRateCacheEntity() })
+            try {
+                heartRateDAO.insertAllHeartRateCache(dataToCache.map { it.toHeartRateCacheEntity() })
+            } catch (e: Exception) {
+                Log.e(TAG, "saveToCacheAndDatabase: ${e.message}")
+            }
 
             // Every 60 seconds, move data from DB cache to permanent storage
-            if (counter >= 60) {
+            if (counter >= 60 && isDatabaseConnected.value) {
+                try {
                 // Assuming you have a separate mechanism for permanent storage.
                 val listFromCache = heartRateDAO.getAllFromCache()
                 // storeToPermanentStorage(lastMinuteData)
                 heartRateDAO.insertAllHeartRates(listFromCache.map { it.toHeartRateEntity() })
                 heartRateDAO.clearCache()
                 counter = 0
+                    heartRateDAO.insertAllHeartRateCache(dataToCache.map { it.toHeartRateCacheEntity() })
+                } catch (e: Exception) {
+                    Log.e(TAG, "saveToCacheAndDatabase: ${e.message}")
+                }
             }
         }
     }
 
     override fun clearJob() {
         job.cancel() // This cancels all coroutines launched in this scope
+    }
+
+    override fun getDatabaseConnectionState(): Flow<Boolean> {
+        return isDatabaseConnected.asStateFlow()
+    }
+
+    override fun toggleDatabaseConnection() {
+        isDatabaseConnected.value = !isDatabaseConnected.value
     }
 
     override suspend fun getCapabilities(): Set<DeltaDataType<*, *>> {
@@ -91,7 +115,6 @@ class BreathingRepositoryImpl @Inject constructor(
 
 
     override fun heartRateMeasureFlow() = callbackFlow { //cold flow
-
         //here the call back code.
         val callback = object : MeasureCallback {
             override fun onAvailabilityChanged(
@@ -100,7 +123,6 @@ class BreathingRepositoryImpl @Inject constructor(
             ) {
                 // Only send back DataTypeAvailability (not LocationAvailability)
                 if (availability is DataTypeAvailability) {
-                    Log.d(TAG, "availability is DataTypeAvailability -- ${availability}")
                     trySendBlocking(HeartRateResponse.Availability(availability))
                 }
             }
@@ -116,6 +138,13 @@ class BreathingRepositoryImpl @Inject constructor(
                     accumulatedData.add(heartRate.last()) // Store in the in-memory list
                 }
             }
+
+            override fun onRegistrationFailed(throwable: Throwable) {
+                super.onRegistrationFailed(throwable)
+                val error = throwable.message ?: "MeasureCallback onRegistrationFailed"
+                Log.e(TAG, "onRegistrationFailed: $error")
+                trySendBlocking(HeartRateResponse.Error(error))
+            }
         }
 
         //register the measureclient callback
@@ -130,16 +159,25 @@ class BreathingRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getCacheItemCount(): Flow<Resource<Int>> {
-        TODO("Not yet implemented")
+    override fun getCacheItemCount(): Flow<Resource<Int>> = flow {
+        emit(Resource.Loading())
+        try {
+            val count = heartRateDAO.getCountInCache()
+            emit(Resource.Success(data = count))
+        } catch (e: Exception) {
+            Log.e(TAG, "getCacheItemCount: ${e.message}")
+            emit(Resource.Error<Int>(message = "${e.message}"))
+        }
     }
-
-    override fun getDatabaseItemCount(): Flow<Resource<Int>> {
-        TODO("Not yet implemented")
-    }
-
-    override fun getHeartRate(): Flow<Resource<HeartRate>> {
-        TODO("Not yet implemented")
+    override fun getDatabaseItemCount(): Flow<Resource<Int>> = flow {
+        emit(Resource.Loading())
+        try {
+            val count = heartRateDAO.getCountInCache()
+            emit(Resource.Success(data = count))
+        } catch (e: Exception) {
+            Log.e(TAG, "getCacheItemCount: ${e.message}")
+            emit(Resource.Error<Int>(message = "${e.message}"))
+        }
     }
 }
 

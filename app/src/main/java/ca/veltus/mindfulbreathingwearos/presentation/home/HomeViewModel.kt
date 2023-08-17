@@ -1,18 +1,27 @@
 package ca.veltus.mindfulbreathingwearos.presentation.home
 
+import android.util.Log
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.health.services.client.data.DataTypeAvailability
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ca.veltus.mindfulbreathingwearos.common.Constants.TAG
 import ca.veltus.mindfulbreathingwearos.common.HeartRateResponse
+import ca.veltus.mindfulbreathingwearos.common.Resource
 import ca.veltus.mindfulbreathingwearos.domain.model.HeartRate
+import ca.veltus.mindfulbreathingwearos.domain.use_cases.clear_repository_job.ClearRepositoryJobUseCase
+import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_cache_count.GetCacheCountUseCase
+import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_database_count.GetDatabaseCountUseCase
 import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_heart_rate.GetHeartRateUseCase
 import ca.veltus.mindfulbreathingwearos.domain.use_cases.has_heart_rate_sensor.HasHeartRateSensorUseCase
+import ca.veltus.mindfulbreathingwearos.domain.use_cases.toggle_database_connection.ToggleDatabaseConnectionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,12 +29,26 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val hasHeartRateSensorUseCase: HasHeartRateSensorUseCase,
-    private val getHeartRateUseCase: GetHeartRateUseCase
-) : ViewModel() {
+    private val getHeartRateUseCase: GetHeartRateUseCase,
+    private val clearRepositoryJobUseCase: ClearRepositoryJobUseCase,
+    toggleDatabaseConnectionUseCase: ToggleDatabaseConnectionUseCase,
+    getCacheItemCountUseCase: GetCacheCountUseCase,
+    getDatabaseItemCountUseCase: GetDatabaseCountUseCase
+    ) : ViewModel() {
 
     // Define a MutableStateFlow to hold the boolean value.
     private val _hasHeartRateSensor = MutableStateFlow(false)
     val hasHeartRateSensor: StateFlow<Boolean> = _hasHeartRateSensor
+
+    val isDatabaseConnected: StateFlow<Boolean> = toggleDatabaseConnectionUseCase()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
+
+    val cacheItemCount: StateFlow<Resource<Int>> = getCacheItemCountUseCase()
+        .stateIn(viewModelScope, SharingStarted.Lazily, Resource.Loading())
+
+    val databaseItemCount: StateFlow<Resource<Int>> = getDatabaseItemCountUseCase()
+        .stateIn(viewModelScope, SharingStarted.Lazily, Resource.Loading())
+
 
     private val _enabled: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val enabled: StateFlow<Boolean> = _enabled
@@ -63,6 +86,9 @@ class HomeViewModel @Inject constructor(
                                 is HeartRateResponse.Availability -> {
                                     _availability.value = measureMessage.availability
                                 }
+                                is HeartRateResponse.Error -> {
+                                    Log.e(TAG, ": ${measureMessage.message}")
+                                }
                             }
                         }
                 }
@@ -73,6 +99,7 @@ class HomeViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         // Call the clear method of the BreathingRepository
+        clearRepositoryJobUseCase()
     }
 
     fun enableHeartRate(isEnabled: Boolean) {

@@ -28,6 +28,8 @@ fun Navigation() {
             val availability by viewModel.availability
             val uiState by viewModel.uiState
             val isEnabled by viewModel.enabled.collectAsState()
+            val cacheCount by viewModel.cacheItemCount.collectAsState()
+            val databaseCount by viewModel.databaseItemCount.collectAsState()
 
             fun navigate() {
                 navController.navigate(Screen.SessionScreen.route)
@@ -47,7 +49,9 @@ fun Navigation() {
                 navigateToSession = { navigate() },
                 permissionState = permissionState,
                 state = uiState,
-                availability = availability
+                availability = availability,
+                cacheCount = cacheCount,
+                databaseCount = databaseCount
             )
         }
 

@@ -9,17 +9,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
+import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.TimeText
+import androidx.wear.compose.material.TimeTextDefaults
+import ca.veltus.mindfulbreathingwearos.common.Resource
 import ca.veltus.mindfulbreathingwearos.domain.model.HeartRate
 import com.google.accompanist.permissions.isGranted
 
 @Composable
 fun ActiveMonitoring(
     heartRate: HeartRate?,
+    cacheCount: Resource<Int>,
+    databaseCount: Resource<Int>,
     navigateToSession: () -> Unit
 ) {
+    CacheAndDatabaseCountDisplay(cacheCount = cacheCount, databaseCount = databaseCount)
     Column(
         modifier = Modifier
             .fillMaxSize()

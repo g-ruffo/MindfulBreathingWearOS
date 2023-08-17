@@ -16,8 +16,10 @@ interface BreathingRepository {
 
     fun getDatabaseItemCount(): Flow<Resource<Int>>
 
-    fun getHeartRate(): Flow<Resource<HeartRate>>
-
     fun clearJob()
+
+    fun getDatabaseConnectionState(): Flow<Boolean>
+
+    fun toggleDatabaseConnection()
 
 }

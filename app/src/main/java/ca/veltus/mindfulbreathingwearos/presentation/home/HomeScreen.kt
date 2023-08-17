@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.health.services.client.data.DataTypeAvailability
+import ca.veltus.mindfulbreathingwearos.common.Resource
 import ca.veltus.mindfulbreathingwearos.domain.model.HeartRate
 import ca.veltus.mindfulbreathingwearos.presentation.home.components.ActiveMonitoring
 import ca.veltus.mindfulbreathingwearos.presentation.home.components.LoadingIcon
@@ -25,6 +26,8 @@ fun HomeScreen(
     permissionState: PermissionState,
     state: UIState,
     availability: DataTypeAvailability,
+    cacheCount: Resource<Int>,
+    databaseCount: Resource<Int>
     ) {
     if (state == UIState.Startup) {
         LoadingIcon()
@@ -37,7 +40,9 @@ fun HomeScreen(
     } else {
         ActiveMonitoring(
             heartRate = heartRate,
-            navigateToSession = { navigateToSession() }
+            navigateToSession = { navigateToSession() },
+            cacheCount = cacheCount,
+            databaseCount = databaseCount
         )
     }
 }
@@ -58,6 +63,8 @@ fun HomeScreenPreview() {
         permissionState = permissionState,
         state = UIState.Supported,
         availability = DataTypeAvailability.AVAILABLE,
+        cacheCount = Resource.Success(data = 80),
+        databaseCount = Resource.Success(data = 80)
         )
 }
 
