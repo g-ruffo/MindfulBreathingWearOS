@@ -88,7 +88,6 @@ class BreathingRepositoryImpl @Inject constructor(
                 heartRateDAO.insertAllHeartRates(listFromCache.map { it.toHeartRateEntity() })
                 heartRateDAO.clearCache()
                 counter = 0
-                    heartRateDAO.insertAllHeartRateCache(dataToCache.map { it.toHeartRateCacheEntity() })
                 } catch (e: Exception) {
                     Log.e(TAG, "saveToCacheAndDatabase: ${e.message}")
                 }
