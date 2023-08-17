@@ -1,21 +1,56 @@
 package ca.veltus.mindfulbreathingwearos.presentation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import ca.veltus.mindfulbreathingwearos.common.Constants.PERMISSION
 import ca.veltus.mindfulbreathingwearos.presentation.home.HomeScreen
+import ca.veltus.mindfulbreathingwearos.presentation.home.HomeViewModel
+import ca.veltus.mindfulbreathingwearos.presentation.home.UIState
 import ca.veltus.mindfulbreathingwearos.presentation.session.SessionScreen
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun Navigation() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Screen.HomeScreen.route) {
         composable(route = Screen.HomeScreen.route) {
-            HomeScreen(navController = navController)
+            val viewModel = hiltViewModel<HomeViewModel>()
+
+            val heartRate by viewModel.heartRate
+            val availability by viewModel.availability
+            val uiState by viewModel.uiState
+            val isEnabled by viewModel.enabled.collectAsState()
+
+            fun navigate() {
+                navController.navigate(Screen.SessionScreen.route)
+            }
+
+            val permissionState = rememberPermissionState(
+                permission = PERMISSION,
+                onPermissionResult = { granted ->
+                    viewModel.enableHeartRate(granted)
+                }
+            )
+            if (isEnabled != permissionState.status.isGranted) {
+                viewModel.enableHeartRate(permissionState.status.isGranted)
+            }
+            HomeScreen(
+                heartRate = heartRate,
+                navigateToSession = { navigate() },
+                permissionState = permissionState,
+                state = uiState,
+                availability = availability
+            )
         }
+
         composable(route = Screen.SessionScreen.route) {
 
             SessionScreen()

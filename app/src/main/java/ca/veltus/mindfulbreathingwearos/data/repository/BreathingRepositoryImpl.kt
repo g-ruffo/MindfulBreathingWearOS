@@ -1,10 +1,8 @@
 package ca.veltus.mindfulbreathingwearos.data.repository
 
 import android.content.ContentValues.TAG
-import android.content.Context
 import android.util.Log
 import androidx.concurrent.futures.await
-import androidx.health.services.client.HealthServices
 import androidx.health.services.client.HealthServicesClient
 import androidx.health.services.client.MeasureCallback
 import androidx.health.services.client.data.Availability
@@ -12,28 +10,87 @@ import androidx.health.services.client.data.DataPointContainer
 import androidx.health.services.client.data.DataType
 import androidx.health.services.client.data.DataTypeAvailability
 import androidx.health.services.client.data.DeltaDataType
-import androidx.health.services.client.data.SampleDataPoint
+import ca.veltus.mindfulbreathingwearos.common.HeartRateResponse
+import ca.veltus.mindfulbreathingwearos.common.Resource
+import ca.veltus.mindfulbreathingwearos.data.hardware.dto.HeartRateDTO
+import ca.veltus.mindfulbreathingwearos.data.hardware.dto.toDTOList
+import ca.veltus.mindfulbreathingwearos.data.hardware.dto.toHeartRate
+import ca.veltus.mindfulbreathingwearos.data.hardware.dto.toHeartRateCacheEntity
+import ca.veltus.mindfulbreathingwearos.data.local.HeartRateDAO
+import ca.veltus.mindfulbreathingwearos.data.local.entity.toHeartRateEntity
+import ca.veltus.mindfulbreathingwearos.domain.model.HeartRate
 import ca.veltus.mindfulbreathingwearos.domain.repository.BreathingRepository
-import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable.isActive
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 class BreathingRepositoryImpl @Inject constructor(
-    @ApplicationContext context: Context,
-    private val healthServicesClient: HealthServicesClient
+    private val heartRateDAO: HeartRateDAO,
+    healthServicesClient: HealthServicesClient
 ): BreathingRepository {
     //measureClient instance.
     private val measureClient = healthServicesClient.measureClient
 
-    suspend fun hasHeartRateCapability(): Boolean {
-        val capabilities = measureClient.getCapabilitiesAsync().await()
-        return (DataType.HEART_RATE_BPM in capabilities.supportedDataTypesMeasure)
+    // In-Memory accumulation
+    private val accumulatedData = mutableListOf<HeartRateDTO>()
+
+    private val job = SupervisorJob()
+    private val repositoryScope = CoroutineScope(Dispatchers.IO + job)
+
+    init {
+        repositoryScope.launch {
+            saveToCacheAndDatabase()
+        }
     }
 
-    fun heartRateMeasureFlow() = callbackFlow { //cold flow
+    private suspend fun saveToCacheAndDatabase() {
+        var counter = 0
+        var dataToCache: List<HeartRateDTO> = emptyList()
+
+        while (isActive) {
+            delay(3000) // Wait for 3 seconds
+            counter += 3
+
+            // Collect data and clear in-memory list inside synchronized block
+            synchronized(accumulatedData) {
+                dataToCache = accumulatedData.toList()
+                accumulatedData.clear()
+            }
+
+            heartRateDAO.insertAllHeartRateCache(dataToCache.map { it.toHeartRateCacheEntity() })
+
+            // Every 60 seconds, move data from DB cache to permanent storage
+            if (counter >= 60) {
+                // Assuming you have a separate mechanism for permanent storage.
+                val listFromCache = heartRateDAO.getAllFromCache()
+                // storeToPermanentStorage(lastMinuteData)
+                heartRateDAO.insertAllHeartRates(listFromCache.map { it.toHeartRateEntity() })
+                heartRateDAO.clearCache()
+                counter = 0
+            }
+        }
+    }
+
+    override fun clearJob() {
+        job.cancel() // This cancels all coroutines launched in this scope
+    }
+
+    override suspend fun getCapabilities(): Set<DeltaDataType<*, *>> {
+        val capabilities = measureClient.getCapabilitiesAsync().await()
+        return capabilities.supportedDataTypesMeasure
+    }
+
+
+    override fun heartRateMeasureFlow() = callbackFlow { //cold flow
 
         //here the call back code.
         val callback = object : MeasureCallback {
@@ -43,15 +100,21 @@ class BreathingRepositoryImpl @Inject constructor(
             ) {
                 // Only send back DataTypeAvailability (not LocationAvailability)
                 if (availability is DataTypeAvailability) {
-                    //if availability == DataTypeAvailability.AVAILABLE true, then data is available and will recive in onDataRecieved Method.
-                    trySendBlocking(MeasureMessage.MeasureAvailability(availability))
+                    Log.d(TAG, "availability is DataTypeAvailability -- ${availability}")
+                    trySendBlocking(HeartRateResponse.Availability(availability))
                 }
             }
 
             override fun onDataReceived(data: DataPointContainer) {
-                val heartRateBpm = data.getData(DataType.HEART_RATE_BPM)
-                Log.d(TAG, "onDataReceived: Current Heart Rate BPM is -- ${heartRateBpm.last().value}")
-                trySendBlocking(MeasureMessage.MeasureData(heartRateBpm))
+                val dataList = data.getData(DataType.HEART_RATE_BPM)
+                val heartRate = dataList.toDTOList()
+                Log.d(TAG, "dataList size -- ${dataList.size} -- Heart Rate BPM is -- ${heartRate.last().value} -- Accuracy is -- ${heartRate.last().accuracy} -- Time is -- ${heartRate.last().timeInstant}")
+                val response = HeartRateResponse.Data(heartRate = heartRate.last().toHeartRate())
+                trySendBlocking(response)
+
+                synchronized(accumulatedData) {
+                    accumulatedData.add(heartRate.last()) // Store in the in-memory list
+                }
             }
         }
 
@@ -66,9 +129,17 @@ class BreathingRepositoryImpl @Inject constructor(
             }
         }
     }
+
+    override fun getCacheItemCount(): Flow<Resource<Int>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getDatabaseItemCount(): Flow<Resource<Int>> {
+        TODO("Not yet implemented")
+    }
+
+    override fun getHeartRate(): Flow<Resource<HeartRate>> {
+        TODO("Not yet implemented")
+    }
 }
 
-sealed class MeasureMessage {
-    class MeasureAvailability(val availability: DataTypeAvailability) : MeasureMessage()
-    class MeasureData(val data: List<SampleDataPoint<Double>>) : MeasureMessage()
-}

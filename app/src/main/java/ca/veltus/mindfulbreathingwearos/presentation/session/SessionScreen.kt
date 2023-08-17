@@ -73,5 +73,4 @@ fun SessionScreen(
 @Preview(device = Devices.WEAR_OS_LARGE_ROUND, showSystemUi = true)
 @Composable
 fun SessionScreenPreview() {
-    HomeScreen(navController = rememberNavController(), viewModel = hiltViewModel())
 }
