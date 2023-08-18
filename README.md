@@ -30,7 +30,7 @@ Mindful Breathing app is designed to offer users an interactive experience with 
 
 <table>
 <tr>
-<td><img src="./images/3.png" width="35%"></td>
-<td><img src="./images/4.png" width="35%"></td>
+<td><img src="./images/3.png" width="100%"></td>
+<td><img src="./images/4.png" width="100%"></td>
 </tr>
 </table>
