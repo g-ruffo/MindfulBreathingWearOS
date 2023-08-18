@@ -3,6 +3,7 @@ package ca.veltus.mindfulbreathingwearos.domain.repository
 import androidx.health.services.client.data.DeltaDataType
 import ca.veltus.mindfulbreathingwearos.common.HeartRateResponse
 import ca.veltus.mindfulbreathingwearos.common.Resource
+import ca.veltus.mindfulbreathingwearos.domain.model.DatabaseUpdateEvent
 import ca.veltus.mindfulbreathingwearos.domain.model.HeartRate
 import kotlinx.coroutines.flow.Flow
 
@@ -22,4 +23,5 @@ interface BreathingRepository {
 
     fun toggleDatabaseConnection()
 
+    fun getDatabaseUpdates(): Flow<DatabaseUpdateEvent>
 }

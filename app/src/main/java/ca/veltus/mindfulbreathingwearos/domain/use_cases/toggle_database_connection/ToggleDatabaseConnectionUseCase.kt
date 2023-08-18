@@ -8,9 +8,7 @@ class ToggleDatabaseConnectionUseCase @Inject constructor(
     private val repository: BreathingRepository
 ) {
     // For observing the value
-    operator fun invoke(): Flow<Boolean> {
-        return repository.getDatabaseConnectionState()
-    }
+    operator fun invoke(): Flow<Boolean> = repository.getDatabaseConnectionState()
 
     // For setting the value
     fun toggleDatabaseConnection(){

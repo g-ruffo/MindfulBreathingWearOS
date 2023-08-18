@@ -23,11 +23,8 @@ import com.google.accompanist.permissions.isGranted
 @Composable
 fun ActiveMonitoring(
     heartRate: HeartRate?,
-    cacheCount: Resource<Int>,
-    databaseCount: Resource<Int>,
     navigateToSession: () -> Unit
 ) {
-    CacheAndDatabaseCountDisplay(cacheCount = cacheCount, databaseCount = databaseCount)
     Column(
         modifier = Modifier
             .fillMaxSize()

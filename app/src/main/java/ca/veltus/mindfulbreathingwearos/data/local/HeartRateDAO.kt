@@ -15,19 +15,19 @@ interface HeartRateDAO {
 
     // Get the count of items in permanent storage
     @Query("SELECT COUNT(*) FROM heartrateentity")
-    suspend fun getCountInPermanentStorage(): Int
+    suspend fun getCountInDatabase(): Int
 
 
 
     // Retrieve all from cache
-    @Query("SELECT * FROM heartrateentity")
+    @Query("SELECT * FROM heartratecacheentity")
     suspend fun getAllFromCache(): List<HeartRateCacheEntity>
 
-    @Query("DELETE FROM heartrateentity")
+    @Query("DELETE FROM heartratecacheentity")
     suspend fun clearCache()
 
     // Get the count of items in cache
-    @Query("SELECT COUNT(*) FROM heartrateentity")
+    @Query("SELECT COUNT(*) FROM heartratecacheentity")
     suspend fun getCountInCache(): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

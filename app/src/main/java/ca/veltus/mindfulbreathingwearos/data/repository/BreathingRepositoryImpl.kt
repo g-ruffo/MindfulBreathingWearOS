@@ -18,17 +18,19 @@ import ca.veltus.mindfulbreathingwearos.data.hardware.dto.toHeartRate
 import ca.veltus.mindfulbreathingwearos.data.hardware.dto.toHeartRateCacheEntity
 import ca.veltus.mindfulbreathingwearos.data.local.HeartRateDAO
 import ca.veltus.mindfulbreathingwearos.data.local.entity.toHeartRateEntity
-import ca.veltus.mindfulbreathingwearos.domain.model.HeartRate
+import ca.veltus.mindfulbreathingwearos.domain.model.DatabaseUpdateEvent
 import ca.veltus.mindfulbreathingwearos.domain.repository.BreathingRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable.isActive
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
@@ -41,12 +43,15 @@ import javax.inject.Inject
 class BreathingRepositoryImpl @Inject constructor(
     private val heartRateDAO: HeartRateDAO,
     healthServicesClient: HealthServicesClient
-): BreathingRepository {
+) : BreathingRepository {
     //measureClient instance.
     private val measureClient = healthServicesClient.measureClient
 
     // In-Memory accumulation
     private val accumulatedData = mutableListOf<HeartRateDTO>()
+
+    private val _databaseUpdates = MutableSharedFlow<DatabaseUpdateEvent>()
+    private val databaseUpdates: SharedFlow<DatabaseUpdateEvent> = _databaseUpdates.asSharedFlow()
 
     private val isDatabaseConnected = MutableStateFlow(true)  // default is true
 
@@ -67,30 +72,35 @@ class BreathingRepositoryImpl @Inject constructor(
             delay(3000) // Wait for 3 seconds
             counter += 3
 
-            // Collect data and clear in-memory list inside synchronized block
-            synchronized(accumulatedData) {
-                dataToCache = accumulatedData.toList()
-                accumulatedData.clear()
-            }
-
-            try {
-                heartRateDAO.insertAllHeartRateCache(dataToCache.map { it.toHeartRateCacheEntity() })
-            } catch (e: Exception) {
-                Log.e(TAG, "saveToCacheAndDatabase: ${e.message}")
-            }
-
-            // Every 60 seconds, move data from DB cache to permanent storage
-            if (counter >= 60 && isDatabaseConnected.value) {
+            if (accumulatedData.isNotEmpty()) {
+                // Collect data and clear in-memory list inside synchronized block
+                synchronized(accumulatedData) {
+                    dataToCache = accumulatedData.toList()
+                    accumulatedData.clear()
+                }
+                var databaseUpdate = DatabaseUpdateEvent()
                 try {
-                // Assuming you have a separate mechanism for permanent storage.
-                val listFromCache = heartRateDAO.getAllFromCache()
-                // storeToPermanentStorage(lastMinuteData)
-                heartRateDAO.insertAllHeartRates(listFromCache.map { it.toHeartRateEntity() })
-                heartRateDAO.clearCache()
-                counter = 0
+                    heartRateDAO.insertAllHeartRateCache(dataToCache.map { it.toHeartRateCacheEntity() })
+                    databaseUpdate.cacheUpdated = true
                 } catch (e: Exception) {
                     Log.e(TAG, "saveToCacheAndDatabase: ${e.message}")
                 }
+
+                // Every 60 seconds, move data from DB cache to permanent storage
+                if (counter >= 6 && isDatabaseConnected.value) {
+                    try {
+                        // Assuming you have a separate mechanism for permanent storage.
+                        val listFromCache = heartRateDAO.getAllFromCache()
+                        // storeToPermanentStorage(lastMinuteData)
+                        heartRateDAO.insertAllHeartRates(listFromCache.map { it.toHeartRateEntity() })
+                        heartRateDAO.clearCache()
+                        databaseUpdate.databaseUpdated = true
+                        counter = 0
+                    } catch (e: Exception) {
+                        Log.e(TAG, "saveToCacheAndDatabase: ${e.message}")
+                    }
+                }
+                _databaseUpdates.emit(databaseUpdate)
             }
         }
     }
@@ -128,8 +138,12 @@ class BreathingRepositoryImpl @Inject constructor(
 
             override fun onDataReceived(data: DataPointContainer) {
                 val dataList = data.getData(DataType.HEART_RATE_BPM)
+                val o2List = data.getData(DataType.VO2_MAX)
+                if(o2List.isNotEmpty()) {
+                    Log.d(TAG, "dataList size -- ${o2List.size} -- Heart Rate BPM is -- ${o2List.last().value}")
+                }
                 val heartRate = dataList.toDTOList()
-                Log.d(TAG, "dataList size -- ${dataList.size} -- Heart Rate BPM is -- ${heartRate.last().value} -- Accuracy is -- ${heartRate.last().accuracy} -- Time is -- ${heartRate.last().timeInstant}")
+//                Log.d(TAG, "dataList size -- ${dataList.size} -- Heart Rate BPM is -- ${heartRate.last().value} -- Accuracy is -- ${heartRate.last().accuracy} -- Time is -- ${heartRate.last().timeInstant}")
                 val response = HeartRateResponse.Data(heartRate = heartRate.last().toHeartRate())
                 trySendBlocking(response)
 
@@ -158,6 +172,10 @@ class BreathingRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getDatabaseUpdates(): Flow<DatabaseUpdateEvent> {
+        return databaseUpdates
+    }
+
     override fun getCacheItemCount(): Flow<Resource<Int>> = flow {
         emit(Resource.Loading())
         try {
@@ -168,10 +186,11 @@ class BreathingRepositoryImpl @Inject constructor(
             emit(Resource.Error<Int>(message = "${e.message}"))
         }
     }
+
     override fun getDatabaseItemCount(): Flow<Resource<Int>> = flow {
         emit(Resource.Loading())
         try {
-            val count = heartRateDAO.getCountInCache()
+            val count = heartRateDAO.getCountInDatabase()
             emit(Resource.Success(data = count))
         } catch (e: Exception) {
             Log.e(TAG, "getCacheItemCount: ${e.message}")

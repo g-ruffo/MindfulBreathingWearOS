@@ -1,4 +1,4 @@
-package ca.veltus.mindfulbreathingwearos.presentation.session.components
+package ca.veltus.mindfulbreathingwearos.presentation.stats.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas

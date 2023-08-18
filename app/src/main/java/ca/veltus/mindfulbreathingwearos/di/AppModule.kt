@@ -1,5 +1,6 @@
 package ca.veltus.mindfulbreathingwearos.di
 
+import android.app.Application
 import android.content.Context
 import androidx.health.services.client.HealthServices
 import androidx.health.services.client.HealthServicesClient
@@ -22,11 +23,11 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideHeartRateDatabase(@ApplicationContext context: Context): HeartRateDatabase {
+    fun provideHeartRateDatabase(app: Application): HeartRateDatabase {
         return Room.databaseBuilder(
-            context,
+            app,
             HeartRateDatabase::class.java,
-            Constants.DATABASE
+            "heart_rate_database"
         ).build()
     }
 

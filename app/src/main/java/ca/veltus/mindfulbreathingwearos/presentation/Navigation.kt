@@ -10,8 +10,8 @@ import androidx.navigation.compose.rememberNavController
 import ca.veltus.mindfulbreathingwearos.common.Constants.PERMISSION
 import ca.veltus.mindfulbreathingwearos.presentation.home.HomeScreen
 import ca.veltus.mindfulbreathingwearos.presentation.home.HomeViewModel
-import ca.veltus.mindfulbreathingwearos.presentation.home.UIState
-import ca.veltus.mindfulbreathingwearos.presentation.session.SessionScreen
+import ca.veltus.mindfulbreathingwearos.presentation.stats.StatsScreen
+import ca.veltus.mindfulbreathingwearos.presentation.stats.StatsViewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -28,11 +28,9 @@ fun Navigation() {
             val availability by viewModel.availability
             val uiState by viewModel.uiState
             val isEnabled by viewModel.enabled.collectAsState()
-            val cacheCount by viewModel.cacheItemCount.collectAsState()
-            val databaseCount by viewModel.databaseItemCount.collectAsState()
 
             fun navigate() {
-                navController.navigate(Screen.SessionScreen.route)
+                navController.navigate(Screen.StatsScreen.route)
             }
 
             val permissionState = rememberPermissionState(
@@ -49,15 +47,19 @@ fun Navigation() {
                 navigateToSession = { navigate() },
                 permissionState = permissionState,
                 state = uiState,
-                availability = availability,
-                cacheCount = cacheCount,
-                databaseCount = databaseCount
+                availability = availability
             )
         }
 
-        composable(route = Screen.SessionScreen.route) {
+        composable(route = Screen.StatsScreen.route) {
+            val viewModel = hiltViewModel<StatsViewModel>()
+            val cacheCount by viewModel.cacheItemCount.collectAsState()
+            val databaseCount by viewModel.databaseItemCount.collectAsState()
 
-            SessionScreen()
+            StatsScreen(
+                cacheCount = cacheCount,
+                databaseCount = databaseCount
+            )
         }
     }
 }

@@ -25,9 +25,7 @@ fun HomeScreen(
     navigateToSession: () -> Unit,
     permissionState: PermissionState,
     state: UIState,
-    availability: DataTypeAvailability,
-    cacheCount: Resource<Int>,
-    databaseCount: Resource<Int>
+    availability: DataTypeAvailability
     ) {
     if (state == UIState.Startup) {
         LoadingIcon()
@@ -40,9 +38,7 @@ fun HomeScreen(
     } else {
         ActiveMonitoring(
             heartRate = heartRate,
-            navigateToSession = { navigateToSession() },
-            cacheCount = cacheCount,
-            databaseCount = databaseCount
+            navigateToSession = { navigateToSession() }
         )
     }
 }
@@ -62,9 +58,7 @@ fun HomeScreenPreview() {
         navigateToSession = { },
         permissionState = permissionState,
         state = UIState.Supported,
-        availability = DataTypeAvailability.AVAILABLE,
-        cacheCount = Resource.Success(data = 80),
-        databaseCount = Resource.Success(data = 80)
+        availability = DataTypeAvailability.AVAILABLE
         )
 }
 
