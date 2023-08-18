@@ -46,20 +46,23 @@ class BreathingRepositoryImpl @Inject constructor(
     private val heartRateDAO: HeartRateDAO,
     healthServicesClient: HealthServicesClient
 ) : BreathingRepository {
-    //measureClient instance.
+    // MeasureClient instance
     private val measureClient = healthServicesClient.measureClient
 
-    // In-Memory accumulation
+    // Uncached heart rate data stored in memory for three seconds
     private val _uncachedHeartRates = MutableStateFlow<List<HeartRateDTO>>(emptyList())
-    val uncachedHeartRates: StateFlow<List<HeartRateDTO>> = _uncachedHeartRates.asStateFlow()
+    private val uncachedHeartRates: StateFlow<List<HeartRateDTO>> =
+        _uncachedHeartRates.asStateFlow()
 
+    // Stores a record of which data sources have been updated
     private val _databaseUpdates = MutableSharedFlow<DatabaseUpdateEvent>()
     private val databaseUpdates: SharedFlow<DatabaseUpdateEvent> = _databaseUpdates.asSharedFlow()
 
     private val _isDatabaseConnected = MutableStateFlow(true)
     private val isDatabaseConnected: StateFlow<Boolean> = _isDatabaseConnected.asStateFlow()
 
-    private val _timerTimeMillis = MutableStateFlow<Long>(240000)
+    // Remaining time left on count down timer
+    private val _timerTimeMillis = MutableStateFlow(FOUR_MINUTES_IN_MILLISECONDS)
     private val timerTimeMillis: StateFlow<Long> = _timerTimeMillis.asStateFlow()
 
     private val job = SupervisorJob()
@@ -76,23 +79,30 @@ class BreathingRepositoryImpl @Inject constructor(
 
     private suspend fun timerCountdown() {
         while (repositoryScope.isActive) {
+            // Start the countdown timer when database is disconnected
             while (!isDatabaseConnected.value) {
+                // Continue counting down until timer reaches 0
                 if (timerTimeMillis.value > 0) {
-                    _timerTimeMillis.emit(_timerTimeMillis.value - 1000)
-                    delay(1000)
+                    // Emit the remaining time of the countdown timer to the view model minus 1 second
+                    _timerTimeMillis.emit(_timerTimeMillis.value - ONE_SECOND_IN_MILLISECONDS)
+                    delay(ONE_SECOND_IN_MILLISECONDS)
                 } else {
-                 _isDatabaseConnected.emit(true)
+                    // Once the countdown timer reaches 0 reconnect the database
+                    _isDatabaseConnected.emit(true)
                 }
             }
         }
     }
 
+    // Save the collected data to the cache every 3 seconds and save cache to database every minute
     private suspend fun saveToCacheAndDatabase() {
-        var counter = 0
-        var dataToCache: List<HeartRateDTO> = emptyList()
+        var secondsCounter = 0
+        var dataToCache: List<HeartRateDTO>
         while (repositoryScope.isActive) {
-            delay(3000) // Wait for 3 seconds
-            counter += 3
+            // Wait for 3 seconds
+            delay(THREE_SECOND_IN_MILLISECONDS)
+            secondsCounter += THREE_SECONDS
+            // Check for uncached data before proceeding
             if (uncachedHeartRates.value.isNotEmpty()) {
                 // Collect data and clear in-memory list inside synchronized block
                 synchronized(_uncachedHeartRates) {
@@ -100,22 +110,31 @@ class BreathingRepositoryImpl @Inject constructor(
                     _uncachedHeartRates.value = emptyList()
                 }
                 try {
+                    // Save uncached data to cache
                     heartRateDAO.insertAllHeartRateCache(dataToCache.map { it.toHeartRateCacheEntity() })
-                    _databaseUpdates.emit(DatabaseUpdateEvent(cacheUpdated = true, uncachedUpdated = true))
+                    // Notify view model that the uncached and cached data has been updated
+                    _databaseUpdates.emit(
+                        DatabaseUpdateEvent(
+                            cacheUpdated = true,
+                            uncachedUpdated = true
+                        )
+                    )
                 } catch (e: Exception) {
                     Log.e(TAG, "saveToCacheAndDatabase: ${e.message}")
                 }
 
-                // Every 60 seconds, move data from DB cache to permanent storage
-                if (counter >= 60 && isDatabaseConnected.value) {
+                // Every 60 seconds, move data from database cache to permanent storage
+                if (secondsCounter >= SIXTY_SECONDS && isDatabaseConnected.value) {
                     try {
-                        // Assuming you have a separate mechanism for permanent storage.
                         val listFromCache = heartRateDAO.getAllFromCache()
-                        // storeToPermanentStorage(lastMinuteData)
+                        // Insert all cached data into database
                         heartRateDAO.insertAllHeartRates(listFromCache.map { it.toHeartRateEntity() })
+                        // Clear the cache after data has been saved
                         heartRateDAO.clearCache()
+                        // Notify view model that the database has been updated
                         _databaseUpdates.emit(DatabaseUpdateEvent(databaseUpdated = true))
-                        counter = 0
+                        // Reset the counter
+                        secondsCounter = 0
                     } catch (e: Exception) {
                         Log.e(TAG, "saveToCacheAndDatabase: ${e.message}")
                     }
@@ -124,14 +143,16 @@ class BreathingRepositoryImpl @Inject constructor(
         }
     }
 
+    // Cancels all coroutines launched in this scope
     override fun clearJob() {
-        job.cancel() // This cancels all coroutines launched in this scope
+        job.cancel()
     }
 
     override fun getDatabaseConnectionState(): Flow<Boolean> {
         return isDatabaseConnected
     }
 
+    // Toggle the databases connection status and set the timers countdown time
     override fun toggleDatabaseConnection(timerTime: Long) {
         _timerTimeMillis.value = timerTime
         _isDatabaseConnected.value = !_isDatabaseConnected.value
@@ -141,20 +162,20 @@ class BreathingRepositoryImpl @Inject constructor(
         return timerTimeMillis
     }
 
+    // Returns all capabilities of the device
     override suspend fun getCapabilities(): Set<DeltaDataType<*, *>> {
         val capabilities = measureClient.getCapabilitiesAsync().await()
         return capabilities.supportedDataTypesMeasure
     }
 
-
-    override fun heartRateMeasureFlow() = callbackFlow { //cold flow
-        //here the call back code.
+    // Create cold flow to fetch heart rate data
+    override fun heartRateMeasureFlow() = callbackFlow {
         val callback = object : MeasureCallback {
             override fun onAvailabilityChanged(
                 dataType: DeltaDataType<*, *>,
                 availability: Availability
             ) {
-                // Only send back DataTypeAvailability (not LocationAvailability)
+                // Send back only DataTypeAvailability and not LocationAvailability
                 if (availability is DataTypeAvailability) {
                     trySendBlocking(HeartRateResponse.Availability(availability))
                 }
@@ -163,15 +184,18 @@ class BreathingRepositoryImpl @Inject constructor(
             override fun onDataReceived(data: DataPointContainer) {
                 val dataList = data.getData(DataType.HEART_RATE_BPM)
                 val heartRate = dataList.toHeartRateDTOList()
+                // Get the last heart rate data from the list for immediate display
                 val response = HeartRateResponse.Data(heartRate = heartRate.last().toHeartRate())
                 trySendBlocking(response)
 
                 synchronized(_uncachedHeartRates) {
+                    // Store the retrieved data in temporary memory
                     val currentList = _uncachedHeartRates.value.toMutableList()
                     currentList.add(heartRate.last())
                     _uncachedHeartRates.value = currentList
                 }
                 repositoryScope.launch {
+                    // Notify view model that the temporary data has been updated
                     _databaseUpdates.emit(DatabaseUpdateEvent(uncachedUpdated = true))
                 }
             }
@@ -184,11 +208,11 @@ class BreathingRepositoryImpl @Inject constructor(
             }
         }
 
-        //register the measureclient callback
+        // Register the MeasureClient callback
         measureClient.registerMeasureCallback(DataType.HEART_RATE_BPM, callback)
 
         awaitClose {
-            //Unregistering measureclient callback
+            //Unregister the MeasureClient callback
             runBlocking {
                 measureClient.unregisterMeasureCallbackAsync(DataType.HEART_RATE_BPM, callback)
                     .await()
@@ -200,6 +224,7 @@ class BreathingRepositoryImpl @Inject constructor(
         return databaseUpdates
     }
 
+    // Returns the current details of the stored cache
     override fun getCacheStats(): Flow<Resource<DatabaseStatsDTO>> = flow {
         emit(Resource.Loading())
         try {
@@ -211,11 +236,11 @@ class BreathingRepositoryImpl @Inject constructor(
         }
     }
 
+    // Returns the current saved details of the database
     override fun getDatabaseStats(): Flow<Resource<DatabaseStatsDTO>> = flow {
         emit(Resource.Loading())
         try {
             val data = heartRateDAO.getDatabaseStats()
-
             emit(Resource.Success(data = data))
         } catch (e: Exception) {
             Log.e(TAG, "getDatabaseItemCount: ${e.message}")
@@ -223,9 +248,11 @@ class BreathingRepositoryImpl @Inject constructor(
         }
     }
 
+    // Returns the current details of the temporary stored data
     override fun getUncachedStats(): Flow<Resource<DatabaseStatsDTO>> = flow {
         emit(Resource.Loading())
         try {
+            // Create a DatabaseStatsDTO object to send back to the view model
             val count = uncachedHeartRates.value.size
             val lastAdded = uncachedHeartRates.value.maxOfOrNull { it.timeInstant }
             val data = DatabaseStatsDTO(count, lastAdded)
@@ -235,6 +262,15 @@ class BreathingRepositoryImpl @Inject constructor(
             Log.e(TAG, "getAccumulatedDataStats: ${e.message}")
             emit(Resource.Error(message = "${e.message}"))
         }
+    }
+
+    companion object {
+        private const val ONE_SECOND_IN_MILLISECONDS: Long = 1000
+        private const val THREE_SECOND_IN_MILLISECONDS: Long = 1000
+        private const val FOUR_MINUTES_IN_MILLISECONDS: Long = 240000
+        private const val SIXTY_SECONDS = 60
+        private const val THREE_SECONDS = 3
+
     }
 }
 

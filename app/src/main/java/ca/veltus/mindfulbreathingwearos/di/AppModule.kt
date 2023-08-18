@@ -5,7 +5,6 @@ import android.content.Context
 import androidx.health.services.client.HealthServices
 import androidx.health.services.client.HealthServicesClient
 import androidx.room.Room
-import ca.veltus.mindfulbreathingwearos.common.Constants
 import ca.veltus.mindfulbreathingwearos.data.local.HeartRateDAO
 import ca.veltus.mindfulbreathingwearos.data.local.HeartRateDatabase
 import ca.veltus.mindfulbreathingwearos.data.repository.BreathingRepositoryImpl
@@ -40,9 +39,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideHealthServicesClient(@ApplicationContext context: Context): HealthServicesClient {
-      return HealthServices.getClient(context)
+        return HealthServices.getClient(context)
     }
-
 
     @Provides
     @Singleton
