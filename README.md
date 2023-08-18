@@ -28,9 +28,7 @@ Mindful Breathing app is designed to offer users an interactive experience with 
 - Once set, the database will temporarily disconnect, and you can observe the cache storage's growth in real-time.
 - Upon reaching the set timer, the database will come online, processing and moving the cached data to permanent storage.
 
-<table>
-<tr>
-<td><img src="./images/3.png" width="100%"></td>
-<td><img src="./images/4.png" width="100%"></td>
-</tr>
-</table>
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/3.png" width="35%" style="margin-right: 5%;">
+    <img src="./images/4.png" width="35%">
+</div>
