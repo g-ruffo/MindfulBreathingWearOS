@@ -134,7 +134,7 @@ class BreathingRepositoryImpl @Inject constructor(
                         // Clear the cache after data has been saved
                         heartRateDAO.clearCache()
                         // Notify view model that the database has been updated
-                        _databaseUpdates.emit(DatabaseUpdateEvent(databaseUpdated = true))
+                        _databaseUpdates.emit(DatabaseUpdateEvent(databaseUpdated = true, cacheUpdated = true))
                         // Reset the counter
                         secondsCounter = 0
                     } catch (e: Exception) {
