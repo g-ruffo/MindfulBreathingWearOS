@@ -5,7 +5,7 @@ Mindful Breathing app is designed to offer users an interactive experience with 
 
 ## Features
 
-- Heart Rate Monitoring: Real-time display of the user's current heart rate.
+- Heart Rate Monitoring: Utilizes Android's Health Services API to fetch simulated data to display to the user.
 - Data Storage Exploration: Dive into the mechanics of data caching and storage, observing how data transitions between temporary memory and the local database.
 - Connectivity Simulation: Experience what happens when there's a connectivity loss. Users can set a timer to simulate a connection drop, observing the behavior of the caching system in response.
 
