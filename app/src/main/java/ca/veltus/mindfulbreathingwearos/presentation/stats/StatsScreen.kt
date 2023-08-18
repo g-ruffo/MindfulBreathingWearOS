@@ -52,8 +52,9 @@ fun StatsScreen(
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
         item {
-            Spacer(modifier = Modifier.padding(vertical = 14.dp))
+            Spacer(modifier = Modifier.padding(vertical = 10.dp))
             Icon(
+                modifier = Modifier.size(32.dp),
                 imageVector = if (isDatabaseEnabled) {
                     Icons.Default.Cloud
                 } else {

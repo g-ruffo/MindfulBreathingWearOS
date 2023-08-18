@@ -47,7 +47,7 @@ fun List<SampleDataPoint<Double>>.toHeartRateDTOList(): List<HeartRateDTO> {
     return this.map { it.toHeartRateDTO() }
 }
 
-private fun determineHeartRateAccuracy(accuracy: DataPointAccuracy?): String {
+fun determineHeartRateAccuracy(accuracy: DataPointAccuracy?): String {
     return when (accuracy) {
         is HeartRateAccuracy -> accuracy.sensorStatus.name
         else -> "UNKNOWN"
