@@ -2,38 +2,27 @@ package ca.veltus.mindfulbreathingwearos.presentation.stats
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.wear.compose.material.StepperDefaults
 import androidx.wear.compose.material.Text
 import androidx.wear.compose.material3.Button
 import androidx.wear.compose.material3.ButtonDefaults
 import androidx.wear.compose.material3.Icon
-import androidx.wear.compose.material3.IconButton
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import ca.veltus.mindfulbreathingwearos.R
 import ca.veltus.mindfulbreathingwearos.common.Resource
@@ -52,30 +41,28 @@ fun StatsScreen(
     time: Int
 ) {
     val tealColor = Color(0xFF03A1A1)
-    val orangeColor = Color(0xFFDB8C02)
-    val orangeOpaque = Color(0xFF20B2AA).copy(alpha = 0.1f)
+    val orange = Color(0xFFDB8C02)
+    val orangeColor = orange.copy(alpha = 0.8f)
+    val orangeOpaque = orange.copy(alpha = 0.1f)
 
-            LazyColumn(
+    LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-
         item {
             Spacer(modifier = Modifier.padding(vertical = 14.dp))
-
             Icon(
                 imageVector = if (isDatabaseEnabled) {
                     Icons.Default.Cloud
                 } else {
                     Icons.Default.CloudOff
                 },
-                contentDescription = "Database enabled status icon",
+                contentDescription = stringResource(R.string.database_enabled_status_icon),
                 tint = if (isDatabaseEnabled) tealColor else Color.Red
             )
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
-
         }
         item {
             CustomStepper(
@@ -90,19 +77,24 @@ fun StatsScreen(
                 ) {
                     if (isDatabaseEnabled) {
                         val minutes = it / 60
-                        Text("$minutes")
-                        Text(text = "min", fontSize = 8.sp,)
+                        Text("$minutes", fontSize = 20.sp)
+                        Text(text = "min", fontSize = 8.sp)
                     } else {
+                        // Display seconds in time format
                         val displayMinutes = it / 60
                         val displaySeconds = it % 60
-                        Text("${displayMinutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}")
+                        Text(
+                            "${
+                                displayMinutes.toString().padStart(2, '0')
+                            }:${displaySeconds.toString().padStart(2, '0')}",
+                            fontSize = 16.sp
+                        )
                     }
                 }
             }
         }
         item {
             Spacer(modifier = Modifier.padding(vertical = 4.dp))
-
             Button(
                 enabled = time > 0,
                 onClick = {
@@ -125,7 +117,9 @@ fun StatsScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     Text(
-                        text = if (isDatabaseEnabled) "Disable" else "Enable",
+                        text = if (isDatabaseEnabled) stringResource(R.string.disable) else stringResource(
+                            R.string.enable
+                        ),
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -134,25 +128,41 @@ fun StatsScreen(
             Spacer(modifier = Modifier.padding(vertical = 6.dp))
         }
         items(3) { index ->
-            when(index) {
-                0 -> CellItem(uncachedStats, imagePainter = painterResource(id = R.drawable.no_sim), name = "Uncached")
-                1 -> CellItem(cacheStats, imagePainter = painterResource(id = R.drawable.sd_storage), name = "Cached")
-                2 -> CellItem(databaseStats, imagePainter = painterResource(id = R.drawable.database), name = "Saved", databaseEnabled = isDatabaseEnabled,bottomPadding = 12.dp)
+            when (index) {
+                0 -> CellItem(
+                    uncachedStats,
+                    imagePainter = painterResource(id = R.drawable.no_sim),
+                    name = stringResource(R.string.uncached)
+                )
+                1 -> CellItem(
+                    cacheStats,
+                    imagePainter = painterResource(id = R.drawable.sd_storage),
+                    name = stringResource(R.string.cached)
+                )
+                2 -> CellItem(
+                    databaseStats,
+                    imagePainter = painterResource(id = R.drawable.database),
+                    name = stringResource(R.string.saved),
+                    databaseEnabled = isDatabaseEnabled,
+                    bottomPadding = 12.dp
+                )
             }
         }
     }
 }
+
 @WearPreviewDevices
 @Composable
 fun SessionScreenPreview() {
-    val stats = Resource.Success(DatabaseStats(count = 43563, lastAddedDate = "August 11, 2023 12:00:22"))
+    val stats =
+        Resource.Success(DatabaseStats(count = 43563, lastAddedDate = "August 11, 2023 12:00:22"))
     StatsScreen(
         uncachedStats = stats,
         cacheStats = stats,
         databaseStats = stats,
         isDatabaseEnabled = true,
         startStopPressed = {},
-    stepperPressed = {},
-    time = 40
+        stepperPressed = {},
+        time = 40
     )
 }

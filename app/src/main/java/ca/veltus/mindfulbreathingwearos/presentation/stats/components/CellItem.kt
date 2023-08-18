@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,13 +19,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -38,7 +36,6 @@ import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
 import ca.veltus.mindfulbreathingwearos.R
 import ca.veltus.mindfulbreathingwearos.common.Resource
 import ca.veltus.mindfulbreathingwearos.domain.model.DatabaseStats
-import ca.veltus.mindfulbreathingwearos.presentation.stats.StatsScreen
 
 @Composable
 fun CellItem(
@@ -53,25 +50,21 @@ fun CellItem(
     val opaqueRed = Color.Red.copy(alpha = 0.1f)
 
     var textFieldsHeight by remember { mutableStateOf(0.dp) }
-
     var rememberedDateText by rememberSaveable { mutableStateOf("--") }
 
     when (stats) {
         is Resource.Success -> {
             val newDateText = stats.data?.lastAddedDate ?: rememberedDateText
             rememberedDateText = newDateText
-            newDateText
         }
         is Resource.Error -> rememberedDateText
         else -> rememberedDateText
     }
-
     val count = when (stats) {
         is Resource.Success -> stats.data?.count ?: "??"
         is Resource.Error -> "??"
         else -> "--"
     }
-
     Row(
         modifier = Modifier
             .fillMaxWidth(fraction = 0.95f)
@@ -94,16 +87,14 @@ fun CellItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
     ) {
-
         Icon(
             painter = imagePainter,
-            contentDescription = "Storage icon",
+            contentDescription = stringResource(R.string.storage_icon),
             tint = tealColor,
             modifier = Modifier
                 .size(textFieldsHeight * 0.6f)
                 .padding(end = 4.dp)
         )
-
         BoxWithConstraints(
             Modifier
                 .layoutId("textFieldsBox")
@@ -114,13 +105,13 @@ fun CellItem(
             Column {
                 Row {
                 Text(text = "$count", style = TextStyle(fontWeight = FontWeight.Bold, color = tealColor))
-                    Text(text = "$name", fontSize = 6.sp, color = tealColor, modifier = Modifier
+                    Text(text = name, fontSize = 6.sp, color = tealColor, modifier = Modifier
                         .padding(start = 4.dp))
                 }
                 Spacer(modifier = Modifier.padding(vertical = 1.dp))
                 Row {
-                    Text(text = "$rememberedDateText", fontSize = 9.sp, color = Color.LightGray)
-                    Text(text = "Updated", fontSize = 6.sp, color = Color.LightGray, modifier = Modifier
+                    Text(text = rememberedDateText, fontSize = 9.sp, color = Color.LightGray)
+                    Text(text = stringResource(R.string.updated), fontSize = 6.sp, color = Color.LightGray, modifier = Modifier
                         .padding(start = 4.dp))
                 }
             }

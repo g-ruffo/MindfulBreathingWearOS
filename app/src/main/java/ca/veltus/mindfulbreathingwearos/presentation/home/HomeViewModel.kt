@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ca.veltus.mindfulbreathingwearos.common.Constants.TAG
 import ca.veltus.mindfulbreathingwearos.common.HeartRateResponse
+import ca.veltus.mindfulbreathingwearos.common.UIState
 import ca.veltus.mindfulbreathingwearos.domain.model.HeartRate
 import ca.veltus.mindfulbreathingwearos.domain.use_cases.clear_repository_job.ClearRepositoryJobUseCase
 import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_heart_rate.GetHeartRateUseCase
@@ -27,16 +28,19 @@ class HomeViewModel @Inject constructor(
     private val clearRepositoryJobUseCase: ClearRepositoryJobUseCase
     ) : ViewModel() {
 
-    // Define a MutableStateFlow to hold the boolean value.
+    // If device does not have available sensor variable is set as false
     private val _hasHeartRateSensor = MutableStateFlow(false)
-    val hasHeartRateSensor: StateFlow<Boolean> = _hasHeartRateSensor
+    private val hasHeartRateSensor: StateFlow<Boolean> = _hasHeartRateSensor
 
+    // Enables the collection of heart rate data
     private val _enabled: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val enabled: StateFlow<Boolean> = _enabled
 
+    // The latest heart rate data retrieved from the repository
     private val _heartRate = mutableStateOf<HeartRate?>(null)
     val heartRate: State<HeartRate?> = _heartRate
 
+    // TODO: Implement sensor availability state
     private val _availability: MutableState<DataTypeAvailability> =
         mutableStateOf(DataTypeAvailability.UNKNOWN)
     val availability: State<DataTypeAvailability> = _availability
@@ -56,6 +60,7 @@ class HomeViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
+            // If enabled, begin collecting heart rate data
             enabled.collect {
                 if (it) {
                     getHeartRateUseCase()
@@ -80,10 +85,11 @@ class HomeViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        // Call the clear method of the BreathingRepository
+        // Call the clear job method of the BreathingRepository
         clearRepositoryJobUseCase()
     }
 
+    // Called from UI to begin retrieving heart rate data
     fun enableHeartRate(isEnabled: Boolean) {
         _enabled.value = isEnabled
         if (!isEnabled) {
@@ -91,9 +97,3 @@ class HomeViewModel @Inject constructor(
         }
     }
 }
-
-    sealed class UIState {
-        object Startup : UIState()
-        object NotSupported : UIState()
-        object Supported : UIState()
-    }

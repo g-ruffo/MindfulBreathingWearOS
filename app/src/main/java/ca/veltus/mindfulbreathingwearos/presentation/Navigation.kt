@@ -25,20 +25,20 @@ fun Navigation() {
             val viewModel = hiltViewModel<HomeViewModel>()
 
             val heartRate by viewModel.heartRate
-            val availability by viewModel.availability
             val uiState by viewModel.uiState
             val isEnabled by viewModel.enabled.collectAsState()
 
-            fun navigate() {
-                navController.navigate(Screen.StatsScreen.route)
-            }
+            // Called when user presses button on home screen
+            fun navigate() { navController.navigate(Screen.StatsScreen.route) }
 
+            // Enables the heart rate data collection upon granting permissions
             val permissionState = rememberPermissionState(
                 permission = PERMISSION,
                 onPermissionResult = { granted ->
                     viewModel.enableHeartRate(granted)
                 }
             )
+            // If permissions are already granted begin collecting heart rate data
             if (isEnabled != permissionState.status.isGranted) {
                 viewModel.enableHeartRate(permissionState.status.isGranted)
             }
@@ -46,13 +46,13 @@ fun Navigation() {
                 heartRate = heartRate,
                 navigateToSession = { navigate() },
                 permissionState = permissionState,
-                state = uiState,
-                availability = availability
+                state = uiState
             )
         }
 
         composable(route = Screen.StatsScreen.route) {
             val viewModel = hiltViewModel<StatsViewModel>()
+
             val uncachedStats by viewModel.uncachedStats.collectAsState()
             val cacheStats by viewModel.cacheStats.collectAsState()
             val databaseStats by viewModel.databaseStats.collectAsState()

@@ -1,3 +1,18 @@
 <resources>
-    <string name="hello_world">From the Round world,\nHello, %1$s!</string>
+    <string name="hello_world">From the Square world,\nHello, %1$s!</string>
+    <string name="not_supported">Device Not Supported</string>
+    <string name="current_heart_rate">Current Heart Rate</string>
+    <string name="permissions">Permissions</string>
+    <string name="permissions_are_required_to_proceed">Permissions are required to proceed.</string>
+    <string name="broken_heart_image">Broken Heart Image</string>
+    <string name="heart_image">Heart Image</string>
+    <string name="stats">Stats</string>
+    <string name="storage_icon">Storage icon</string>
+    <string name="updated">Updated</string>
+    <string name="database_enabled_status_icon">Database enabled status icon</string>
+    <string name="disable">Disable</string>
+    <string name="enable">Enable</string>
+    <string name="uncached">Uncached</string>
+    <string name="cached">Cached</string>
+    <string name="saved">Saved</string>
 </resources>

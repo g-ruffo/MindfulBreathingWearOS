@@ -1,14 +1,11 @@
 package ca.veltus.mindfulbreathingwearos.presentation.home.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
-
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,20 +25,16 @@ fun Unavailable() {
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        // Background icon that fills the entire screen
         Icon(
             imageVector = Icons.Default.Block,
             contentDescription = stringResource(id = R.string.not_supported),
             modifier = Modifier.fillMaxSize().padding(16.dp),
             tint = Color.Red
         )
-
-        // Box with black background to ensure text is visible
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.background(Color.Black).padding(8.dp)
         ) {
-            // Text centered over the icon
             Text(
                 text = stringResource(id = R.string.not_supported),
                 textAlign = TextAlign.Center,

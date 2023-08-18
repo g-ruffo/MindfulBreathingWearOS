@@ -14,9 +14,6 @@ import androidx.wear.compose.material.Text
 import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.IconButton
 import androidx.wear.compose.ui.tooling.preview.WearPreviewDevices
-import ca.veltus.mindfulbreathingwearos.common.Resource
-import ca.veltus.mindfulbreathingwearos.domain.model.DatabaseStats
-import ca.veltus.mindfulbreathingwearos.presentation.stats.StatsScreen
 
 @Composable
 fun CustomStepper(
@@ -58,7 +55,6 @@ fun CustomStepper(
 @WearPreviewDevices
 @Composable
 fun StepperPreview() {
-    val stats = Resource.Success(DatabaseStats(count = 43563, lastAddedDate = "August 11, 2023 12:00:22"))
     CustomStepper(
         value = 4,
         onValueChange = {},
