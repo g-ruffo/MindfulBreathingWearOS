@@ -11,13 +11,18 @@ import javax.inject.Inject
 class GetUncachedStatsUseCase @Inject constructor(
     private val repository: BreathingRepository
 ) {
+    // Returns the number of uncached items and the date it was last updated
     operator fun invoke(): Flow<Resource<DatabaseStats>> =
         repository.getUncachedStats().map { resource ->
             when (resource) {
                 is Resource.Success -> {
-                    val domainModel = resource.data?.toDatabaseStats() ?: DatabaseStats(count = -1, lastAddedDate = null)
+                    val domainModel = resource.data?.toDatabaseStats() ?: DatabaseStats(
+                        count = -1,
+                        lastAddedDate = null
+                    )
                     Resource.Success(domainModel)
                 }
+
                 is Resource.Loading -> Resource.Loading()
                 is Resource.Error -> Resource.Error(message = resource.message ?: "Error")
             }

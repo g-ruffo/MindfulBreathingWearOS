@@ -44,7 +44,7 @@ fun CellItem(
     name: String,
     bottomPadding: Dp = 2.dp,
     databaseEnabled: Boolean = true
-    ) {
+) {
     val tealColor = Color(0xFF03A1A1)
     val opaqueTeal = tealColor.copy(alpha = 0.1f)
     val opaqueRed = Color.Red.copy(alpha = 0.1f)
@@ -57,6 +57,7 @@ fun CellItem(
             val newDateText = stats.data?.lastAddedDate ?: rememberedDateText
             rememberedDateText = newDateText
         }
+
         is Resource.Error -> rememberedDateText
         else -> rememberedDateText
     }
@@ -104,15 +105,25 @@ fun CellItem(
         ) {
             Column {
                 Row {
-                Text(text = "$count", style = TextStyle(fontWeight = FontWeight.Bold, color = tealColor))
-                    Text(text = name, fontSize = 6.sp, color = tealColor, modifier = Modifier
-                        .padding(start = 4.dp))
+                    Text(
+                        text = "$count",
+                        style = TextStyle(fontWeight = FontWeight.Bold, color = tealColor)
+                    )
+                    Text(
+                        text = name, fontSize = 6.sp, color = tealColor, modifier = Modifier
+                            .padding(start = 4.dp)
+                    )
                 }
                 Spacer(modifier = Modifier.padding(vertical = 1.dp))
                 Row {
                     Text(text = rememberedDateText, fontSize = 9.sp, color = Color.LightGray)
-                    Text(text = stringResource(R.string.updated), fontSize = 6.sp, color = Color.LightGray, modifier = Modifier
-                        .padding(start = 4.dp))
+                    Text(
+                        text = stringResource(R.string.updated),
+                        fontSize = 6.sp,
+                        color = Color.LightGray,
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                    )
                 }
             }
         }
@@ -122,6 +133,11 @@ fun CellItem(
 @WearPreviewDevices
 @Composable
 fun SessionScreenPreview() {
-    val stats = Resource.Success(DatabaseStats(count = 43563, lastAddedDate = "August 11, 2023 12:00:22"))
-    CellItem(stats = stats, imagePainter = painterResource(id = R.drawable.database), name = "Cache")
+    val stats =
+        Resource.Success(DatabaseStats(count = 43563, lastAddedDate = "August 11, 2023 12:00:22"))
+    CellItem(
+        stats = stats,
+        imagePainter = painterResource(id = R.drawable.database),
+        name = "Cache"
+    )
 }

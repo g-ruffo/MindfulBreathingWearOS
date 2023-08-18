@@ -26,7 +26,7 @@ class HomeViewModel @Inject constructor(
     private val hasHeartRateSensorUseCase: HasHeartRateSensorUseCase,
     private val getHeartRateUseCase: GetHeartRateUseCase,
     private val clearRepositoryJobUseCase: ClearRepositoryJobUseCase
-    ) : ViewModel() {
+) : ViewModel() {
 
     // If device does not have available sensor variable is set as false
     private val _hasHeartRateSensor = MutableStateFlow(false)
@@ -47,6 +47,7 @@ class HomeViewModel @Inject constructor(
 
     private val _uiState: MutableState<UIState> = mutableStateOf(UIState.Startup)
     val uiState: State<UIState> = _uiState
+
     init {
         viewModelScope.launch {
             hasHeartRateSensorUseCase().collect { value ->
@@ -70,9 +71,11 @@ class HomeViewModel @Inject constructor(
                                 is HeartRateResponse.Data -> {
                                     _heartRate.value = measureMessage.heartRate
                                 }
+
                                 is HeartRateResponse.Availability -> {
                                     _availability.value = measureMessage.availability
                                 }
+
                                 is HeartRateResponse.Error -> {
                                     Log.e(TAG, ": ${measureMessage.message}")
                                 }

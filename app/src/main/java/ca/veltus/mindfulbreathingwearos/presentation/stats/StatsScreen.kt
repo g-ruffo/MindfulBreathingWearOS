@@ -134,11 +134,13 @@ fun StatsScreen(
                     imagePainter = painterResource(id = R.drawable.no_sim),
                     name = stringResource(R.string.uncached)
                 )
+
                 1 -> CellItem(
                     cacheStats,
                     imagePainter = painterResource(id = R.drawable.sd_storage),
                     name = stringResource(R.string.cached)
                 )
+
                 2 -> CellItem(
                     databaseStats,
                     imagePainter = painterResource(id = R.drawable.database),

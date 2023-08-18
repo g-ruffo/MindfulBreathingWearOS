@@ -28,12 +28,16 @@ fun Unavailable() {
         Icon(
             imageVector = Icons.Default.Block,
             contentDescription = stringResource(id = R.string.not_supported),
-            modifier = Modifier.fillMaxSize().padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
             tint = Color.Red
         )
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.background(Color.Black).padding(8.dp)
+            modifier = Modifier
+                .background(Color.Black)
+                .padding(8.dp)
         ) {
             Text(
                 text = stringResource(id = R.string.not_supported),

@@ -58,7 +58,9 @@ class StatsViewModel @Inject constructor(
         viewModelScope.launch {
             getDatabaseConnectionStateUseCase().collect { isConnected ->
                 // If the database reconnects after timer has completed, reset the timers time to 4 minutes (240 seconds)
-                if (isConnected) { _timerTimeSeconds.value = TIMER_RESET_VALUE }
+                if (isConnected) {
+                    _timerTimeSeconds.value = TIMER_RESET_VALUE
+                }
                 _isDatabaseConnected.value = isConnected
             }
         }
@@ -101,10 +103,12 @@ class StatsViewModel @Inject constructor(
             _databaseStats.value = it
         }
     }
+
     // Called when user clicks the enable/ disable database button and passes the selected timer time to the repository.
     fun toggleDatabaseEnabled() {
         toggleDatabaseConnectionUseCase(timerTime = timerTimeSeconds.value)
     }
+
     // Called when either the plus or minus stepper button is pressed. Each call passes +/- 60 seconds
     fun updateTimerTime(seconds: Int) {
         _timerTimeSeconds.value += seconds

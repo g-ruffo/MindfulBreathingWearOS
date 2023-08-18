@@ -8,24 +8,14 @@ import ca.veltus.mindfulbreathingwearos.domain.model.DatabaseUpdateEvent
 import kotlinx.coroutines.flow.Flow
 
 interface BreathingRepository {
-
     suspend fun getCapabilities(): Set<DeltaDataType<*, *>>
-
     fun heartRateMeasureFlow(): Flow<HeartRateResponse>
-
     fun getCacheStats(): Flow<Resource<DatabaseStatsDTO>>
-
     fun getDatabaseStats(): Flow<Resource<DatabaseStatsDTO>>
-
     fun getUncachedStats(): Flow<Resource<DatabaseStatsDTO>>
-
     fun clearJob()
-
     fun getDatabaseConnectionState(): Flow<Boolean>
-
     fun toggleDatabaseConnection(timerTime: Long)
-
     fun getTimerTimeMillis(): Flow<Long>
-
     fun getDatabaseUpdates(): Flow<DatabaseUpdateEvent>
 }

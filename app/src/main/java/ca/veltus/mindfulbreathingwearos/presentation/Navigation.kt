@@ -29,7 +29,9 @@ fun Navigation() {
             val isEnabled by viewModel.enabled.collectAsState()
 
             // Called when user presses button on home screen
-            fun navigate() { navController.navigate(Screen.StatsScreen.route) }
+            fun navigate() {
+                navController.navigate(Screen.StatsScreen.route)
+            }
 
             // Enables the heart rate data collection upon granting permissions
             val permissionState = rememberPermissionState(

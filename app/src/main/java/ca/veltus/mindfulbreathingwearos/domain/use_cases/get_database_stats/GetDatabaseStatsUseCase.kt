@@ -11,14 +11,18 @@ import javax.inject.Inject
 class GetDatabaseStatsUseCase @Inject constructor(
     private val repository: BreathingRepository
 ) {
-    // For observing the value
-    operator fun invoke(): Flow<Resource<DatabaseStats>>  =
+    // Returns the number of saved items in the database and the date it was last updated
+    operator fun invoke(): Flow<Resource<DatabaseStats>> =
         repository.getDatabaseStats().map { resource ->
             when (resource) {
                 is Resource.Success -> {
-                    val domainModel = resource.data?.toDatabaseStats() ?: DatabaseStats(count = -1, lastAddedDate = null)
+                    val domainModel = resource.data?.toDatabaseStats() ?: DatabaseStats(
+                        count = -1,
+                        lastAddedDate = null
+                    )
                     Resource.Success(domainModel)
                 }
+
                 is Resource.Loading -> Resource.Loading()
                 is Resource.Error -> Resource.Error(message = resource.message ?: "Error")
             }

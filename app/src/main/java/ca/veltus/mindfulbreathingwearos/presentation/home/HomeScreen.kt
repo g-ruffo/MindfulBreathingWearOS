@@ -22,12 +22,12 @@ fun HomeScreen(
     navigateToSession: () -> Unit,
     permissionState: PermissionState,
     state: UIState
-    ) {
+) {
     // One startup show the loading icon
     if (state == UIState.Startup) {
         LoadingIcon()
         // If the device is not supported display the unavailable screen
-    } else if (state == UIState.NotSupported){
+    } else if (state == UIState.NotSupported) {
         Unavailable()
         // If permissions arent granted request permissions from the user
     } else if (!permissionState.status.isGranted) {
@@ -58,6 +58,6 @@ fun HomeScreenPreview() {
         navigateToSession = { },
         permissionState = permissionState,
         state = UIState.Supported
-        )
+    )
 }
 

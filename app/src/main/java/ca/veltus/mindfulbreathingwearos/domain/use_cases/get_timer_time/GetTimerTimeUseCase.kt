@@ -8,5 +8,6 @@ import javax.inject.Inject
 class GetTimerTimeUseCase @Inject constructor(
     private val repository: BreathingRepository
 ) {
+    // Passes the remaining time on the countdown timer to the view model
     operator fun invoke(): Flow<Int> = repository.getTimerTimeMillis().map { (it / 1000).toInt() }
 }

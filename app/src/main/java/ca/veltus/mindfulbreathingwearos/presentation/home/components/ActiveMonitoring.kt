@@ -57,9 +57,9 @@ fun ActiveMonitoring(
         Row(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.Bottom,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp)
         ) {
             Text(
                 text = "${heartRate?.value ?: "--"}",
@@ -69,8 +69,9 @@ fun ActiveMonitoring(
                 textAlign = TextAlign.Right
 
             )
-            Column(modifier = Modifier
-                .padding(start = 4.dp, end = 20.dp)
+            Column(
+                modifier = Modifier
+                    .padding(start = 4.dp, end = 20.dp)
             ) {
                 AnimatedHeart(heartRate = heartRate, size = DpSize(width = 28.dp, height = 28.dp))
                 Text(

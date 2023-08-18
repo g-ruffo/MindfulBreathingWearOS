@@ -36,11 +36,11 @@ fun PermissionsRequired(
     val orangeOpaque = orangeColor.copy(alpha = 0.6f)
 
     Column(
-    modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp),
-    verticalArrangement = Arrangement.Center,
-    horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = stringResource(R.string.permissions_are_required_to_proceed),

@@ -6,6 +6,7 @@ import javax.inject.Inject
 class ClearRepositoryJobUseCase @Inject constructor(
     private val repository: BreathingRepository
 ) {
+    // Clears the repositories job when view model is destroyed
     operator fun invoke() {
         repository.clearJob()
     }
