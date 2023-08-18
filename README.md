@@ -11,7 +11,26 @@ Mindful Breathing app is designed to offer users an interactive experience with 
 
 <img src="./images/2.png" width="35%">
 
+1. View Heart Rate:
 
+- Launch the app.
+- On the main screen, the current heart rate is prominently displayed.
+- For more detailed stats, tap the "stats" button.
 
-<img src="./images/3.png" width="35%">
-<img src="./images/4.png" width="35%">
+2. Explore Data Storage:
+
+- Navigate to the secondary activity and scroll down.
+- This provides a view into the app's temporary memory, cache, and database storage statuses.
+
+3. Simulate Connectivity Loss:
+
+- Use the stepper buttons to set a desired countdown timer.
+- Once set, the database will temporarily disconnect, and you can observe the cache storage's growth in real-time.
+- Upon reaching the set timer, the database will come online, processing and moving the cached data to permanent storage.
+
+<table>
+<tr>
+<td><img src="./images/3.png" width="35%"></td>
+<td><img src="./images/4.png" width="35%"></td>
+</tr>
+</table>
