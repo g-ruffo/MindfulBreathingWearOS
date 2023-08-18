@@ -7,11 +7,8 @@ import javax.inject.Inject
 class ToggleDatabaseConnectionUseCase @Inject constructor(
     private val repository: BreathingRepository
 ) {
-    // For observing the value
-    operator fun invoke(): Flow<Boolean> = repository.getDatabaseConnectionState()
-
-    // For setting the value
-    fun toggleDatabaseConnection(){
-        repository.toggleDatabaseConnection()
+    operator fun invoke(timerTime: Int) {
+        val timeInMillis = (timerTime * 1000).toLong()
+        repository.toggleDatabaseConnection(timerTime = timeInMillis)
     }
 }

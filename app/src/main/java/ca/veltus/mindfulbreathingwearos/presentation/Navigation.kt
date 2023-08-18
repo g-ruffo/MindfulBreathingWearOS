@@ -54,14 +54,19 @@ fun Navigation() {
         composable(route = Screen.StatsScreen.route) {
             val viewModel = hiltViewModel<StatsViewModel>()
             val uncachedStats by viewModel.uncachedStats.collectAsState()
-            val cacheCount by viewModel.cacheStats.collectAsState()
-            val databaseCount by viewModel.databaseStats.collectAsState()
+            val cacheStats by viewModel.cacheStats.collectAsState()
+            val databaseStats by viewModel.databaseStats.collectAsState()
+            val isDatabaseConnected by viewModel.isDatabaseConnected.collectAsState()
+            val timerTime by viewModel.timerTimeSeconds.collectAsState()
 
             StatsScreen(
-                uncachedStats = cacheCount,
-                cacheStats = cacheCount,
-                databaseStats = databaseCount,
-                isDatabaseEnabled = true
+                uncachedStats = uncachedStats,
+                cacheStats = cacheStats,
+                databaseStats = databaseStats,
+                isDatabaseEnabled = isDatabaseConnected,
+                startStopPressed = { viewModel.toggleDatabaseEnabled() },
+                stepperPressed = { value -> viewModel.updateTimerTime(value) },
+                time = timerTime
             )
         }
     }

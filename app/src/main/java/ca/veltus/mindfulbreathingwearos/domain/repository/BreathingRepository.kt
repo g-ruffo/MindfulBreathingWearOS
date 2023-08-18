@@ -5,7 +5,6 @@ import ca.veltus.mindfulbreathingwearos.common.HeartRateResponse
 import ca.veltus.mindfulbreathingwearos.common.Resource
 import ca.veltus.mindfulbreathingwearos.data.hardware.dto.DatabaseStatsDTO
 import ca.veltus.mindfulbreathingwearos.domain.model.DatabaseUpdateEvent
-import ca.veltus.mindfulbreathingwearos.domain.model.HeartRate
 import kotlinx.coroutines.flow.Flow
 
 interface BreathingRepository {
@@ -24,7 +23,9 @@ interface BreathingRepository {
 
     fun getDatabaseConnectionState(): Flow<Boolean>
 
-    fun toggleDatabaseConnection()
+    fun toggleDatabaseConnection(timerTime: Long)
+
+    fun getTimerTimeMillis(): Flow<Long>
 
     fun getDatabaseUpdates(): Flow<DatabaseUpdateEvent>
 }

@@ -11,7 +11,7 @@ val lastAddedTimestamp: Long?
 )
 
 fun DatabaseStatsDTO.toDatabaseStats(): DatabaseStats {
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("h:mm:ss a", Locale.getDefault())
     val lastAddedFormatted = this.lastAddedTimestamp?.let {
         dateFormat.format(Date(it))
     }

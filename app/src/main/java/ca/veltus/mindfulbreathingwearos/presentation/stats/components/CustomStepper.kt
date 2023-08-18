@@ -22,6 +22,7 @@ import ca.veltus.mindfulbreathingwearos.presentation.stats.StatsScreen
 fun CustomStepper(
     value: Int,
     onValueChange: (Int) -> Unit,
+    isDatabaseConnected: Boolean,
     valueProgression: IntProgression,
     modifier: Modifier = Modifier,
     valueContent: @Composable (Int) -> Unit
@@ -34,7 +35,10 @@ fun CustomStepper(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Decrease button on the left
-        IconButton(onClick = { if (value > valueProgression.first) onValueChange(value - 1) }) {
+        IconButton(
+            enabled = isDatabaseConnected && (value > valueProgression.first),
+            onClick = { if (value > valueProgression.first) onValueChange(-60) }
+        ) {
             Icon(StepperDefaults.Decrease, "Decrease")
         }
 
@@ -42,7 +46,10 @@ fun CustomStepper(
         valueContent(value)
 
         // Increase button on the right
-        IconButton(onClick = { if (value < valueProgression.last) onValueChange(value + 1) }) {
+        IconButton(
+            enabled = isDatabaseConnected,
+            onClick = { if (value < valueProgression.last) onValueChange(60) }
+        ) {
             Icon(StepperDefaults.Increase, "Increase")
         }
     }
@@ -55,6 +62,7 @@ fun StepperPreview() {
     CustomStepper(
         value = 4,
         onValueChange = {},
+        isDatabaseConnected = false,
         valueProgression = 0..10
     ) {
         Column(
