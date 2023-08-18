@@ -30,11 +30,10 @@ fun HeartRateDTO.toHeartRate(): HeartRate {
 
 fun SampleDataPoint<Double>.toHeartRateDTO(): HeartRateDTO {
     // Calculate the boot instant
-    val bootInstant = Instant.ofEpochMilli(System.currentTimeMillis() - SystemClock.elapsedRealtime())
-
+    val bootInstant = Instant
+        .ofEpochMilli(System.currentTimeMillis() - SystemClock.elapsedRealtime())
     // Convert timeDurationFromBoot to actual time instant
     val dataPointInstant = this.getTimeInstant(bootInstant)
-
     val heartRateAccuracy = determineHeartRateAccuracy(this.accuracy)
 
     return HeartRateDTO(

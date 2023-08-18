@@ -6,8 +6,8 @@ import java.util.Date
 import java.util.Locale
 
 data class DatabaseStatsDTO(
-val count: Int,
-val lastAddedTimestamp: Long?
+    val count: Int,
+    val lastAddedTimestamp: Long?
 )
 
 fun DatabaseStatsDTO.toDatabaseStats(): DatabaseStats {

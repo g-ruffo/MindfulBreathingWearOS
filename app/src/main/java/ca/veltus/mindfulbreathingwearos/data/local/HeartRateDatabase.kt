@@ -6,10 +6,9 @@ import ca.veltus.mindfulbreathingwearos.data.local.entity.HeartRateCacheEntity
 import ca.veltus.mindfulbreathingwearos.data.local.entity.HeartRateEntity
 
 @Database(
-    entities = [HeartRateEntity::class, HeartRateCacheEntity::class],
-    version = 1
+    entities = [HeartRateEntity::class, HeartRateCacheEntity::class], version = 1
 )
-abstract class HeartRateDatabase: RoomDatabase() {
+abstract class HeartRateDatabase : RoomDatabase() {
 
     abstract val dao: HeartRateDAO
 }

@@ -7,7 +7,6 @@ import androidx.room.Query
 import ca.veltus.mindfulbreathingwearos.data.hardware.dto.DatabaseStatsDTO
 import ca.veltus.mindfulbreathingwearos.data.local.entity.HeartRateCacheEntity
 import ca.veltus.mindfulbreathingwearos.data.local.entity.HeartRateEntity
-import ca.veltus.mindfulbreathingwearos.domain.model.DatabaseStats
 
 @Dao
 interface HeartRateDAO {
@@ -18,7 +17,6 @@ interface HeartRateDAO {
     // Combined function to get the count of items in the database and the last added timestamp
     @Query("SELECT COUNT(*) as count, MAX(timeInstant) as lastAddedTimestamp FROM heartrateentity")
     suspend fun getDatabaseStats(): DatabaseStatsDTO
-
 
 
     // Retrieve all from cache
