@@ -1,6 +1,7 @@
 package ca.veltus.mindfulbreathingwearos.common
 
 import androidx.health.services.client.data.DataTypeAvailability
+import ca.veltus.mindfulbreathingwearos.data.hardware.dto.HeartRateDTO
 import ca.veltus.mindfulbreathingwearos.domain.model.HeartRate
 
 sealed class HeartRateResponse {

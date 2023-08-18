@@ -12,9 +12,10 @@ import androidx.health.services.client.data.DataTypeAvailability
 import androidx.health.services.client.data.DeltaDataType
 import ca.veltus.mindfulbreathingwearos.common.HeartRateResponse
 import ca.veltus.mindfulbreathingwearos.common.Resource
+import ca.veltus.mindfulbreathingwearos.data.hardware.dto.DatabaseStatsDTO
 import ca.veltus.mindfulbreathingwearos.data.hardware.dto.HeartRateDTO
-import ca.veltus.mindfulbreathingwearos.data.hardware.dto.toDTOList
 import ca.veltus.mindfulbreathingwearos.data.hardware.dto.toHeartRate
+import ca.veltus.mindfulbreathingwearos.data.hardware.dto.toHeartRateDTOList
 import ca.veltus.mindfulbreathingwearos.data.hardware.dto.toHeartRateCacheEntity
 import ca.veltus.mindfulbreathingwearos.data.local.HeartRateDAO
 import ca.veltus.mindfulbreathingwearos.data.local.entity.toHeartRateEntity
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
@@ -48,7 +50,8 @@ class BreathingRepositoryImpl @Inject constructor(
     private val measureClient = healthServicesClient.measureClient
 
     // In-Memory accumulation
-    private val accumulatedData = mutableListOf<HeartRateDTO>()
+    private val _uncachedHeartRates = MutableStateFlow<List<HeartRateDTO>>(emptyList())
+    val uncachedHeartRates: StateFlow<List<HeartRateDTO>> = _uncachedHeartRates.asStateFlow()
 
     private val _databaseUpdates = MutableSharedFlow<DatabaseUpdateEvent>()
     private val databaseUpdates: SharedFlow<DatabaseUpdateEvent> = _databaseUpdates.asSharedFlow()
@@ -72,12 +75,13 @@ class BreathingRepositoryImpl @Inject constructor(
             delay(3000) // Wait for 3 seconds
             counter += 3
 
-            if (accumulatedData.isNotEmpty()) {
+            if (uncachedHeartRates.value.isNotEmpty()) {
                 // Collect data and clear in-memory list inside synchronized block
-                synchronized(accumulatedData) {
-                    dataToCache = accumulatedData.toList()
-                    accumulatedData.clear()
+                synchronized(_uncachedHeartRates) {
+                    dataToCache = uncachedHeartRates.value.toList()
+                    _uncachedHeartRates.value = emptyList()
                 }
+
                 var databaseUpdate = DatabaseUpdateEvent()
                 try {
                     heartRateDAO.insertAllHeartRateCache(dataToCache.map { it.toHeartRateCacheEntity() })
@@ -138,17 +142,15 @@ class BreathingRepositoryImpl @Inject constructor(
 
             override fun onDataReceived(data: DataPointContainer) {
                 val dataList = data.getData(DataType.HEART_RATE_BPM)
-                val o2List = data.getData(DataType.VO2_MAX)
-                if(o2List.isNotEmpty()) {
-                    Log.d(TAG, "dataList size -- ${o2List.size} -- Heart Rate BPM is -- ${o2List.last().value}")
-                }
-                val heartRate = dataList.toDTOList()
-//                Log.d(TAG, "dataList size -- ${dataList.size} -- Heart Rate BPM is -- ${heartRate.last().value} -- Accuracy is -- ${heartRate.last().accuracy} -- Time is -- ${heartRate.last().timeInstant}")
+                val heartRate = dataList.toHeartRateDTOList()
+                Log.d(TAG, "dataList size -- ${dataList.size} -- Heart Rate BPM is -- ${heartRate.last().value} -- Accuracy is -- ${heartRate.last().accuracy} -- Time is -- ${heartRate.last().timeInstant}")
                 val response = HeartRateResponse.Data(heartRate = heartRate.last().toHeartRate())
                 trySendBlocking(response)
 
-                synchronized(accumulatedData) {
-                    accumulatedData.add(heartRate.last()) // Store in the in-memory list
+                synchronized(_uncachedHeartRates) {
+                    val currentList = _uncachedHeartRates.value.toMutableList()
+                    currentList.add(heartRate.last())
+                    _uncachedHeartRates.value = currentList
                 }
             }
 
@@ -176,25 +178,40 @@ class BreathingRepositoryImpl @Inject constructor(
         return databaseUpdates
     }
 
-    override fun getCacheItemCount(): Flow<Resource<Int>> = flow {
+    override fun getCacheStats(): Flow<Resource<DatabaseStatsDTO>> = flow {
         emit(Resource.Loading())
         try {
-            val count = heartRateDAO.getCountInCache()
-            emit(Resource.Success(data = count))
+            val data = heartRateDAO.getCacheStats()
+            emit(Resource.Success(data = data))
         } catch (e: Exception) {
             Log.e(TAG, "getCacheItemCount: ${e.message}")
-            emit(Resource.Error<Int>(message = "${e.message}"))
+            emit(Resource.Error(message = "${e.message}"))
         }
     }
 
-    override fun getDatabaseItemCount(): Flow<Resource<Int>> = flow {
+    override fun getDatabaseStats(): Flow<Resource<DatabaseStatsDTO>> = flow {
         emit(Resource.Loading())
         try {
-            val count = heartRateDAO.getCountInDatabase()
-            emit(Resource.Success(data = count))
+            val data = heartRateDAO.getDatabaseStats()
+
+            emit(Resource.Success(data = data))
         } catch (e: Exception) {
-            Log.e(TAG, "getCacheItemCount: ${e.message}")
-            emit(Resource.Error<Int>(message = "${e.message}"))
+            Log.e(TAG, "getDatabaseItemCount: ${e.message}")
+            emit(Resource.Error(message = "${e.message}"))
+        }
+    }
+
+    override fun getUncachedStats(): Flow<Resource<DatabaseStatsDTO>> = flow {
+        emit(Resource.Loading())
+        try {
+            val count = uncachedHeartRates.value.size
+            val lastAdded = uncachedHeartRates.value.maxOfOrNull { it.timeInstant } ?: 0L
+            val data = DatabaseStatsDTO(count, lastAdded)
+
+            emit(Resource.Success(data = data))
+        } catch (e: Exception) {
+            Log.e(TAG, "getAccumulatedDataStats: ${e.message}")
+            emit(Resource.Error(message = "${e.message}"))
         }
     }
 }

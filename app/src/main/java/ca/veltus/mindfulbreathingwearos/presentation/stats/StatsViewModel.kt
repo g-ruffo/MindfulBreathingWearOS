@@ -1,13 +1,13 @@
 package ca.veltus.mindfulbreathingwearos.presentation.stats
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ca.veltus.mindfulbreathingwearos.common.Resource
-import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_cache_count.GetCacheCountUseCase
-import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_database_count.GetDatabaseCountUseCase
+import ca.veltus.mindfulbreathingwearos.domain.model.DatabaseStats
+import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_cache_stats.GetCacheStatsUseCase
+import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_database_stats.GetDatabaseStatsUseCase
 import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_database_updates.GetDatabaseUpdatesUseCase
+import ca.veltus.mindfulbreathingwearos.domain.use_cases.get_uncached_stats.GetUncachedStatsUseCase
 import ca.veltus.mindfulbreathingwearos.domain.use_cases.toggle_database_connection.ToggleDatabaseConnectionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,42 +21,55 @@ import javax.inject.Inject
 class StatsViewModel @Inject constructor(
     private val getDatabaseUpdatesUseCase: GetDatabaseUpdatesUseCase,
     private val toggleDatabaseConnectionUseCase: ToggleDatabaseConnectionUseCase,
-    private val getCacheItemCountUseCase: GetCacheCountUseCase,
-    private val getDatabaseItemCountUseCase: GetDatabaseCountUseCase
+    private val getCacheStatsUseCase: GetCacheStatsUseCase,
+    private val getDatabaseStatsUseCase: GetDatabaseStatsUseCase,
+    private val getUncachedStatsUseCase: GetUncachedStatsUseCase
 ) : ViewModel() {
 
     val isDatabaseConnected: StateFlow<Boolean> = toggleDatabaseConnectionUseCase()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
 
-    private val _cacheItemCount = MutableStateFlow<Resource<Int>>(Resource.Loading())
-    val cacheItemCount: StateFlow<Resource<Int>> = _cacheItemCount
+    private val _uncachedStats = MutableStateFlow<Resource<DatabaseStats>>(Resource.Loading())
+    val uncachedStats: StateFlow<Resource<DatabaseStats>> = _uncachedStats
 
-    private val _databaseItemCount = MutableStateFlow<Resource<Int>>(Resource.Loading())
-    val databaseItemCount: StateFlow<Resource<Int>> = _databaseItemCount
+    private val _cacheStats = MutableStateFlow<Resource<DatabaseStats>>(Resource.Loading())
+    val cacheStats: StateFlow<Resource<DatabaseStats>> = _cacheStats
+
+    private val _databaseStats = MutableStateFlow<Resource<DatabaseStats>>(Resource.Loading())
+    val databaseStats: StateFlow<Resource<DatabaseStats>> = _databaseStats
 
 
     init {
         viewModelScope.launch {
             getDatabaseUpdatesUseCase().collect { value ->
+                if (value.uncachedUpdated) {
+                    refreshUncachedStats()
+                }
                 if (value.cacheUpdated) {
-                    refreshCacheItemCount()
+                    refreshCacheStats()
                 }
                 if (value.databaseUpdated) {
-                    refreshDatabaseItemCount()
+                    refreshDatabaseStats()
                 }
             }
         }
     }
 
-    private suspend fun refreshCacheItemCount() {
-        getCacheItemCountUseCase.invoke().collect {
-            _cacheItemCount.value = it
+    private suspend fun refreshUncachedStats() {
+        getUncachedStatsUseCase.invoke().collect {
+            _uncachedStats.value = it
         }
     }
 
-    private suspend fun refreshDatabaseItemCount() {
-        getDatabaseItemCountUseCase.invoke().collect {
-            _databaseItemCount.value = it
+    private suspend fun refreshCacheStats() {
+        getCacheStatsUseCase.invoke().collect {
+            _cacheStats.value = it
+        }
+    }
+
+    private suspend fun refreshDatabaseStats() {
+        getDatabaseStatsUseCase.invoke().collect {
+            _databaseStats.value = it
         }
     }
 }

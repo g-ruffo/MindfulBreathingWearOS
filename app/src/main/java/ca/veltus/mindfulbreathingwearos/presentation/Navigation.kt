@@ -53,12 +53,15 @@ fun Navigation() {
 
         composable(route = Screen.StatsScreen.route) {
             val viewModel = hiltViewModel<StatsViewModel>()
-            val cacheCount by viewModel.cacheItemCount.collectAsState()
-            val databaseCount by viewModel.databaseItemCount.collectAsState()
+            val uncachedStats by viewModel.uncachedStats.collectAsState()
+            val cacheCount by viewModel.cacheStats.collectAsState()
+            val databaseCount by viewModel.databaseStats.collectAsState()
 
             StatsScreen(
-                cacheCount = cacheCount,
-                databaseCount = databaseCount
+                uncachedStats = cacheCount,
+                cacheStats = cacheCount,
+                databaseStats = databaseCount,
+                isDatabaseEnabled = true
             )
         }
     }

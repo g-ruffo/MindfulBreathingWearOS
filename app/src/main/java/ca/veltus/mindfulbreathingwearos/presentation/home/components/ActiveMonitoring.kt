@@ -25,6 +25,14 @@ fun ActiveMonitoring(
     heartRate: HeartRate?,
     navigateToSession: () -> Unit
 ) {
+    Scaffold(timeText = {
+        TimeText(
+            timeTextStyle = TimeTextDefaults.timeTextStyle(
+                fontSize = 10.sp
+            )
+        )
+    }) {
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -46,11 +54,12 @@ fun ActiveMonitoring(
 
         Button(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(horizontal = 40.dp),
             onClick = {
                 navigateToSession()
             }) {
-            Text("Start Breathing Session")
+            Text("Stats")
         }
     }
 }

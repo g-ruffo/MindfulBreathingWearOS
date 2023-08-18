@@ -28,7 +28,7 @@ fun HeartRateDTO.toHeartRate(): HeartRate {
     )
 }
 
-fun SampleDataPoint<Double>.toDTO(): HeartRateDTO {
+fun SampleDataPoint<Double>.toHeartRateDTO(): HeartRateDTO {
     // Calculate the boot instant
     val bootInstant = Instant.ofEpochMilli(System.currentTimeMillis() - SystemClock.elapsedRealtime())
 
@@ -44,8 +44,8 @@ fun SampleDataPoint<Double>.toDTO(): HeartRateDTO {
     )
 }
 
-fun List<SampleDataPoint<Double>>.toDTOList(): List<HeartRateDTO> {
-    return this.map { it.toDTO() }
+fun List<SampleDataPoint<Double>>.toHeartRateDTOList(): List<HeartRateDTO> {
+    return this.map { it.toHeartRateDTO() }
 }
 
 private fun determineHeartRateAccuracy(accuracy: DataPointAccuracy?): String {

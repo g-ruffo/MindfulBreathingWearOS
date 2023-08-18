@@ -4,8 +4,10 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import ca.veltus.mindfulbreathingwearos.data.hardware.dto.DatabaseStatsDTO
 import ca.veltus.mindfulbreathingwearos.data.local.entity.HeartRateCacheEntity
 import ca.veltus.mindfulbreathingwearos.data.local.entity.HeartRateEntity
+import ca.veltus.mindfulbreathingwearos.domain.model.DatabaseStats
 
 @Dao
 interface HeartRateDAO {
@@ -13,9 +15,9 @@ interface HeartRateDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllHeartRates(heartRates: List<HeartRateEntity>)
 
-    // Get the count of items in permanent storage
-    @Query("SELECT COUNT(*) FROM heartrateentity")
-    suspend fun getCountInDatabase(): Int
+    // Combined function to get the count of items in the database and the last added timestamp
+    @Query("SELECT COUNT(*) as count, MAX(timeInstant) as lastAddedTimestamp FROM heartrateentity")
+    suspend fun getDatabaseStats(): DatabaseStatsDTO
 
 
 
@@ -26,9 +28,9 @@ interface HeartRateDAO {
     @Query("DELETE FROM heartratecacheentity")
     suspend fun clearCache()
 
-    // Get the count of items in cache
-    @Query("SELECT COUNT(*) FROM heartratecacheentity")
-    suspend fun getCountInCache(): Int
+    // Combined function to get the count of items in cache and the last added timestamp
+    @Query("SELECT COUNT(*) as count, MAX(timeInstant) as lastAddedTimestamp FROM heartratecacheentity")
+    suspend fun getCacheStats(): DatabaseStatsDTO
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAllHeartRateCache(heartRates: List<HeartRateCacheEntity>)
