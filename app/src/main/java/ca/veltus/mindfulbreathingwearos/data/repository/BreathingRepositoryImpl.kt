@@ -39,13 +39,16 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.lang.Exception
 import javax.inject.Inject
 
 class BreathingRepositoryImpl @Inject constructor(
-    private val heartRateDAO: HeartRateDAO,
-    healthServicesClient: HealthServicesClient
+    private val heartRateDAO: HeartRateDAO, healthServicesClient: HealthServicesClient
 ) : BreathingRepository {
+    private val uncachedHeartRatesMutex = Mutex()
+
     // MeasureClient instance
     private val measureClient = healthServicesClient.measureClient
 
@@ -105,7 +108,7 @@ class BreathingRepositoryImpl @Inject constructor(
             // Check for uncached data before proceeding
             if (uncachedHeartRates.value.isNotEmpty()) {
                 // Collect data and clear in-memory list inside synchronized block
-                synchronized(_uncachedHeartRates) {
+                uncachedHeartRatesMutex.withLock {
                     dataToCache = uncachedHeartRates.value.toList()
                     _uncachedHeartRates.value = emptyList()
                 }
@@ -115,8 +118,7 @@ class BreathingRepositoryImpl @Inject constructor(
                     // Notify view model that the uncached and cached data has been updated
                     _databaseUpdates.emit(
                         DatabaseUpdateEvent(
-                            cacheUpdated = true,
-                            uncachedUpdated = true
+                            cacheUpdated = true, uncachedUpdated = true
                         )
                     )
                 } catch (e: Exception) {
@@ -172,8 +174,7 @@ class BreathingRepositoryImpl @Inject constructor(
     override fun heartRateMeasureFlow() = callbackFlow {
         val callback = object : MeasureCallback {
             override fun onAvailabilityChanged(
-                dataType: DeltaDataType<*, *>,
-                availability: Availability
+                dataType: DeltaDataType<*, *>, availability: Availability
             ) {
                 // Send back only DataTypeAvailability and not LocationAvailability
                 if (availability is DataTypeAvailability) {
@@ -188,13 +189,13 @@ class BreathingRepositoryImpl @Inject constructor(
                 val response = HeartRateResponse.Data(heartRate = heartRate.last().toHeartRate())
                 trySendBlocking(response)
 
-                synchronized(_uncachedHeartRates) {
-                    // Store the retrieved data in temporary memory
-                    val currentList = _uncachedHeartRates.value.toMutableList()
-                    currentList.add(heartRate.last())
-                    _uncachedHeartRates.value = currentList
-                }
                 repositoryScope.launch {
+                    uncachedHeartRatesMutex.withLock {
+                        // Store the retrieved data in temporary memory
+                        val currentList = _uncachedHeartRates.value.toMutableList()
+                        currentList.add(heartRate.last())
+                        _uncachedHeartRates.value = currentList
+                    }
                     // Notify view model that the temporary data has been updated
                     _databaseUpdates.emit(DatabaseUpdateEvent(uncachedUpdated = true))
                 }
