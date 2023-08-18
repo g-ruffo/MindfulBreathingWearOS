@@ -267,7 +267,7 @@ class BreathingRepositoryImpl @Inject constructor(
 
     companion object {
         private const val ONE_SECOND_IN_MILLISECONDS: Long = 1000
-        private const val THREE_SECOND_IN_MILLISECONDS: Long = 1000
+        private const val THREE_SECOND_IN_MILLISECONDS: Long = 3000
         private const val FOUR_MINUTES_IN_MILLISECONDS: Long = 240000
         private const val SIXTY_SECONDS = 60
         private const val THREE_SECONDS = 3
